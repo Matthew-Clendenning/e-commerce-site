@@ -1,0 +1,111 @@
+.nav {
+  background: white;
+  border-bottom: 1px solid #e5e7eb;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.container {
+  max-width: 1400px;
+  margin: 0 auto;
+  padding: 0 20px;
+  height: 70px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.logo {
+  font-size: 24px;
+  font-weight: 700;
+  color: #111827;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+
+.logo:hover {
+  color: var(--color-primary);
+}
+
+.links {
+  display: flex;
+  gap: 32px;
+  align-items: center;
+}
+
+.link {
+  font-size: 16px;
+  font-weight: 500;
+  color: #6b7280;
+  text-decoration: none;
+  transition: color 0.2s ease;
+  position: relative;
+}
+
+.link:hover {
+  color: var(--color-primary);
+}
+
+.link::after {
+  content: '';
+  position: absolute;
+  bottom: -8px;
+  left: 0;
+  width: 0;
+  height: 2px;
+  background: var(--color-primary);
+  transition: width 0.2s ease;
+}
+
+.link:hover::after {
+  width: 100%;
+}
+
+.auth {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.signInButton {
+  padding: 10px 24px;
+  background: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.signInButton:hover {
+  background: #0056b3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 8px rgba(0, 123, 255, 0.2);
+}
+
+@media (max-width: 768px) {
+  .container {
+    height: 60px;
+  }
+
+  .logo {
+    font-size: 18px;
+  }
+
+  .links {
+    gap: 16px;
+  }
+
+  .link {
+    font-size: 14px;
+  }
+
+  .signInButton {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+}
