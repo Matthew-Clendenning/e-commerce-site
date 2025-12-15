@@ -1,83 +1,51 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import ProductCard from '@/components/ProductCard'
-import styles from './products.module.css'
 import { Metadata } from 'next'
+import { prisma } from '@/lib/prisma'
+import ProductCard from '@/components/ProductCard'
+import ProductsFilter from '@/components/ProductsFilter'
+import styles from './products.module.css'
 
 export const metadata: Metadata = {
   title: 'Shop All Products',
   description: 'Browse our exclusive collection of premium accessories including watches, jewelry, and more.',
   openGraph: {
     title: 'Shop All Products | Premium Accessories',
-    description: 'Browse our complete collection of premium accessories including watches, jewelry, and more.',
-    images: ['/og-products.jpg'],
+    description: 'Browse our exclusive collection of premium accessories including watches, jewelry, and more.',
   },
 }
 
-type Product = {
-  id: string
-  name: string
-  slug: string
-  description: string | null
-  price: number
-  imageUrl: string | null
-  stock: number
-  category: {
-    id: string
-    name: string
-    slug: string
-  }
+type Props = {
+  searchParams: Promise<{ category?: string }>
 }
 
-type Category = {
-  id: string
-  name: string
-  slug: string
-  description: string | null
-}
+export default async function ProductsPage({ searchParams }: Props) {
+  const params = await searchParams
+  const categorySlug = params.category
 
-export default function ProductsPage() {
-  const [products, setProducts] = useState<Product[]>([])
-  const [categories, setCategories] = useState<Category[]>([])
-  const [selectedCategory, setSelectedCategory] = useState<string>('all')
-  const [loading, setLoading] = useState(true)
+  // Fetch categories
+  const categories = await prisma.category.findMany({
+    orderBy: { name: 'asc' }
+  })
 
-  useEffect(() => {
-    fetchCategories()
-    fetchProducts()
-  }, [])
-
-  const fetchCategories = async () => {
-    try {
-      const response = await fetch('/api/categories')
-      const data = await response.json()
-      setCategories(data)
-    } catch (error) {
-      console.error('Error fetching categories:', error)
+  // Fetch products based on category filter
+  const products = await prisma.product.findMany({
+    where: categorySlug ? {
+      category: {
+        slug: categorySlug
+      }
+    } : undefined,
+    include: {
+      category: true
+    },
+    orderBy: {
+      createdAt: 'desc'
     }
-  }
+  })
 
-  const fetchProducts = async (category?: string) => {
-    setLoading(true)
-    try {
-      const url = category && category !== 'all' 
-        ? `/api/products?category=${category}` 
-        : '/api/products'
-      const response = await fetch(url)
-      const data = await response.json()
-      setProducts(data)
-    } catch (error) {
-      console.error('Error fetching products:', error)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  const handleCategoryChange = (categorySlug: string) => {
-    setSelectedCategory(categorySlug)
-    fetchProducts(categorySlug === 'all' ? undefined : categorySlug)
-  }
+  // Convert price to number
+  const productsWithNumberPrice = products.map(product => ({
+    ...product,
+    price: Number(product.price)
+  }))
 
   return (
     <div className={styles.container}>
@@ -86,39 +54,23 @@ export default function ProductsPage() {
         <p>Discover our exclusive collection of premium accessories</p>
       </header>
 
-      <div className={styles.filters}>
-        <button
-          className={selectedCategory === 'all' ? styles.filterActive : styles.filter}
-          onClick={() => handleCategoryChange('all')}
-        >
-          All Products
-        </button>
-        {categories.map((category) => (
-          <button
-            key={category.id}
-            className={selectedCategory === category.slug ? styles.filterActive : styles.filter}
-            onClick={() => handleCategoryChange(category.slug)}
-          >
-            {category.name}
-          </button>
-        ))}
+      <ProductsFilter 
+        categories={categories}
+        selectedCategory={categorySlug || 'all'}
+      />
+
+      <div className={styles.count}>
+        Showing {productsWithNumberPrice.length} {productsWithNumberPrice.length === 1 ? 'product' : 'products'}
       </div>
 
-      {loading ? (
-        <div className={styles.loading}>Loading products...</div>
-      ) : products.length === 0 ? (
+      {productsWithNumberPrice.length === 0 ? (
         <div className={styles.empty}>No products found</div>
       ) : (
-        <>
-          <div className={styles.count}>
-            Showing {products.length} {products.length === 1 ? 'product' : 'products'}
-          </div>
-          <div className={styles.grid}>
-            {products.map((product) => (
-              <ProductCard key={product.id} {...product} />
-            ))}
-          </div>
-        </>
+        <div className={styles.grid}>
+          {productsWithNumberPrice.map((product) => (
+            <ProductCard key={product.id} {...product} />
+          ))}
+        </div>
       )}
     </div>
   )
