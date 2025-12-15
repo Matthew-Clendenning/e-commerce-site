@@ -3,7 +3,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import styles from './product.module.css'
+import styles from './products.module.css'
 
 type Props = {
     params: Promise<{ slug: string }>
