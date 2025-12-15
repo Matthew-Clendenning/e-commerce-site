@@ -82,3 +82,36 @@ export async function GET(
     )
   }
 }
+
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    // Check if user is authenticated
+    const { userId } = await auth()
+
+    if (!userId) {
+      return NextResponse.json(
+        { error: 'Unauthorized' },
+        { status: 401 }
+      )
+    }
+
+    const { id } = await params
+    await prisma.product.delete({
+      where: { id }
+    })
+
+    return NextResponse.json({
+      success: true,
+      message: 'Product deleted successfully'
+    })
+  } catch (error) {
+    console.error('Error deleting product:', error)
+    return NextResponse.json(
+      { error: 'Failed to delete product', details: error },
+      { status: 500 }
+    )
+  }
+}
