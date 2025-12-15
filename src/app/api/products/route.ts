@@ -1,6 +1,11 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
+import { Product, Category } from '@prisma/client'
+
+type ProductWithCategory = Product & {
+  category: Category
+}
 
 export async function GET(request: NextRequest) {
   try {
@@ -21,7 +26,7 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    const productsWithNumberPrice = products.map(product => ({
+    const productsWithNumberPrice = products.map((product: ProductWithCategory) => ({
       ...product,
       price: Number(product.price)
     }))
