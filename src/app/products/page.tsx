@@ -3,6 +3,17 @@
 import { useEffect, useState } from 'react'
 import ProductCard from '@/components/ProductCard'
 import styles from './products.module.css'
+import { Metadata } from 'next'
+
+export const metadata: Metadata = {
+  title: 'Shop All Products',
+  description: 'Browse our exclusive collection of premium accessories including watches, jewelry, and more.',
+  openGraph: {
+    title: 'Shop All Products | Premium Accessories',
+    description: 'Browse our complete collection of premium accessories including watches, jewelry, and more.',
+    images: ['/og-products.jpg'],
+  },
+}
 
 type Product = {
   id: string
