@@ -1,6 +1,7 @@
-import { prisma } from '@/lib/prisma';
-import { auth, currentUser } from '@clerk/nextjs/server';
-import { NextResponse } from 'next/server';
+import { prisma } from '@/lib/prisma'
+import { auth, currentUser } from '@clerk/nextjs/server'
+import { NextResponse } from 'next/server'
+import { validateProductId } from '@/lib/validation'
 
 // GET - fetch user's cart
 export async function GET() {
@@ -44,7 +45,7 @@ export async function GET() {
     }
 }
 
-// POST - Add item to cart
+// POST - Add item to cart (UPDATED WITH VALIDATION)
 export async function POST(request: Request) {
     try {
         const { userId } = await auth();
@@ -72,12 +73,32 @@ export async function POST(request: Request) {
             }
         });
 
-        const { productId } = await request.json();
+        const body = await request.json();
+        
+        // STEP 1: VALIDATE PRODUCT ID
+        const productId = validateProductId(body.productId)
+        if (!productId) {
+            return NextResponse.json({ error: 'Invalid product ID' }, { status: 400 })
+        }
 
-        // Check if item already in cart
+        // STEP 2: FETCH PRODUCT FROM DATABASE (never trust client!)
+        const product = await prisma.product.findUnique({
+            where: { id: productId }
+        })
+
+        if (!product) {
+            return NextResponse.json({ error: 'Product not found' }, { status: 404 })
+        }
+
+        // STEP 3: CHECK STOCK AVAILABILITY
+        if (product.stock === 0) {
+            return NextResponse.json({ error: 'Product out of stock' }, { status: 400 })
+        }
+
+        // STEP 4: Check if item already in cart
         const existingCartItem = await prisma.cartItem.findUnique({
             where: {
-                userId_productId: { // This uses our @unique contraint in Prisma schema
+                userId_productId: {
                     userId,
                     productId
                 }
@@ -85,13 +106,22 @@ export async function POST(request: Request) {
         })
 
         if (existingCartItem) {
+            // STEP 5: Validate new quantity won't exceed stock
+            const newQuantity = existingCartItem.quantity + 1
+            
+            if (newQuantity > product.stock) {
+                return NextResponse.json({ 
+                    error: 'Cannot add more items - stock limit reached' 
+                }, { status: 400 })
+            }
+
             // Item exists - increase quantity
             const updated = await prisma.cartItem.update({
                 where: {
                     userId_productId: { userId, productId }
                 },
                 data: {
-                    quantity: { increment: 1 } // Prisma's atomic increment
+                    quantity: { increment: 1 }
                 },
                 include: {
                     product: true

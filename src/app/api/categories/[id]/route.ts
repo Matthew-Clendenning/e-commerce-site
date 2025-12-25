@@ -2,48 +2,46 @@ import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth'
 import { 
-  validatePrice, 
-  validateStock, 
-  validateProductName, 
-  validateDescription,
+  validateCategoryName, 
+  validateCategoryDescription,
   validateId 
 } from '@/lib/validation'
 
-// GET - Public endpoint (anyone can view products)
+// GET - Public endpoint
 export async function GET(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const { id } = await params
-    
-    // Validate ID format
     const validId = validateId(id)
 
-    const product = await prisma.product.findUnique({
+    const category = await prisma.category.findUnique({
       where: { id: validId },
       include: {
-        category: true
+        _count: {
+          select: { products: true }
+        }
       }
     })
 
-    if (!product) {
+    if (!category) {
       return NextResponse.json(
-        { error: 'Product not found' },
+        { error: 'Category not found' },
         { status: 404 }
       )
     }
 
-    return NextResponse.json({
-      ...product,
-      price: Number(product.price)
-    })
+    return NextResponse.json(category)
   } catch (error) {
-    console.error('Error fetching product:', error)
+    console.error('Error fetching category:', error)
     
-    // Don't expose internal errors to client
+    if (error instanceof Error && error.message.includes('Invalid ID')) {
+      return NextResponse.json({ error: error.message }, { status: 400 })
+    }
+    
     return NextResponse.json(
-      { error: 'Failed to fetch product' },
+      { error: 'Failed to fetch category' },
       { status: 500 }
     )
   }
@@ -60,15 +58,15 @@ export async function PATCH(
 
     const { id } = await params
     const validId = validateId(id)
-    
-    // Check if product exists
-    const existingProduct = await prisma.product.findUnique({
+
+    // Check if category exists
+    const existingCategory = await prisma.category.findUnique({
       where: { id: validId }
     })
-    
-    if (!existingProduct) {
+
+    if (!existingCategory) {
       return NextResponse.json(
-        { error: 'Product not found' },
+        { error: 'Category not found' },
         { status: 404 }
       )
     }
@@ -77,45 +75,56 @@ export async function PATCH(
 
     // Build validated update data
     const updateData: {
-      stock?: number
-      price?: number
       name?: string
+      slug?: string
       description?: string | null
     } = {}
 
-    // Validate each field if provided
-    if (body.stock !== undefined) {
-      updateData.stock = validateStock(body.stock)
-    }
-    
-    if (body.price !== undefined) {
-      updateData.price = validatePrice(body.price)
-    }
-    
     if (body.name !== undefined) {
-      updateData.name = validateProductName(body.name)
-    }
-    
-    if (body.description !== undefined) {
-      updateData.description = validateDescription(body.description)
+      const name = validateCategoryName(body.name)
+      updateData.name = name
+      
+      // Regenerate slug from new name
+      const slug = name
+        .toLowerCase()
+        .replace(/[^a-z0-9]+/g, '-')
+        .replace(/(^-|-$)/g, '')
+      
+      // Check if new slug conflicts with another category
+      if (slug !== existingCategory.slug) {
+        const slugExists = await prisma.category.findUnique({
+          where: { slug }
+        })
+        
+        if (slugExists) {
+          return NextResponse.json(
+            { error: 'A category with this name already exists' },
+            { status: 400 }
+          )
+        }
+        
+        updateData.slug = slug
+      }
     }
 
-    const product = await prisma.product.update({
+    if (body.description !== undefined) {
+      updateData.description = validateCategoryDescription(body.description)
+    }
+
+    const category = await prisma.category.update({
       where: { id: validId },
       data: updateData,
       include: {
-        category: true
+        _count: {
+          select: { products: true }
+        }
       }
     })
 
-    return NextResponse.json({
-      ...product,
-      price: Number(product.price)
-    })
+    return NextResponse.json(category)
   } catch (error) {
-    console.error('Error updating product:', error)
+    console.error('Error updating category:', error)
 
-    // Handle specific error types
     if (error instanceof Error) {
       if (error.message === 'Unauthorized') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -124,13 +133,12 @@ export async function PATCH(
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
       if (error.message.includes('must be') || error.message.includes('cannot')) {
-        // Validation error
         return NextResponse.json({ error: error.message }, { status: 400 })
       }
     }
 
     return NextResponse.json(
-      { error: 'Failed to update product' },
+      { error: 'Failed to update category' },
       { status: 500 }
     )
   }
@@ -138,7 +146,7 @@ export async function PATCH(
 
 // DELETE - Admin only
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
@@ -147,29 +155,44 @@ export async function DELETE(
 
     const { id } = await params
     const validId = validateId(id)
-    
-    // Check if product exists
-    const existingProduct = await prisma.product.findUnique({
-      where: { id: validId }
+
+    // Check if category exists
+    const existingCategory = await prisma.category.findUnique({
+      where: { id: validId },
+      include: {
+        _count: {
+          select: { products: true }
+        }
+      }
     })
-    
-    if (!existingProduct) {
+
+    if (!existingCategory) {
       return NextResponse.json(
-        { error: 'Product not found' },
+        { error: 'Category not found' },
         { status: 404 }
       )
     }
 
-    await prisma.product.delete({
+    // Check if category has products
+    if (existingCategory._count.products > 0) {
+      return NextResponse.json(
+        { 
+          error: `Cannot delete category with ${existingCategory._count.products} products. Please move or delete products first.` 
+        },
+        { status: 400 }
+      )
+    }
+
+    await prisma.category.delete({
       where: { id: validId }
     })
 
     return NextResponse.json({
       success: true,
-      message: 'Product deleted successfully'
+      message: 'Category deleted successfully'
     })
   } catch (error) {
-    console.error('Error deleting product:', error)
+    console.error('Error deleting category:', error)
 
     if (error instanceof Error) {
       if (error.message === 'Unauthorized') {
@@ -181,7 +204,7 @@ export async function DELETE(
     }
 
     return NextResponse.json(
-      { error: 'Failed to delete product' },
+      { error: 'Failed to delete category' },
       { status: 500 }
     )
   }

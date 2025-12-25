@@ -1,6 +1,7 @@
 import { prisma } from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
+import { validateProductId, validateQuantity } from '@/lib/validation';
 
 type Props = {
     params: Promise<{ productId: string }>
@@ -16,38 +17,90 @@ export async function PATCH(request: NextRequest, { params }: Props) {
         }
 
         const { productId } = await params;
-        const { quantity } = await request.json();
+        const body = await request.json();
 
-        // Validate quantity
-        if (quantity < 0 ) {
+        // STEP 1: Validate product ID format
+        const validProductId = validateProductId(productId);
+        if (!validProductId) {
             return NextResponse.json(
-                {error: 'Quantity must be positive' },
+                { error: 'Invalid product ID' },
                 { status: 400 }
-            )
+            );
         }
 
-        // If quantity is 0, delete the item instead
-        if (quantity === 0) {
-            await prisma.cartItem.delete({
-                where: {
-                    userId_productId: { userId, productId }
-                }
-            })
+        // STEP 2: Fetch the product to check stock
+        const product = await prisma.product.findUnique({
+            where: { id: validProductId }
+        });
 
-            return NextResponse.json({
-                success: true,
-                message: 'Item removed from cart'
-            })
+        if (!product) {
+            return NextResponse.json(
+                { error: 'Product not found' },
+                { status: 404 }
+            );
         }
 
-        // Update the quantity
+        // STEP 3: Validate quantity using helper
+        let validatedQuantity: number;
+        try {
+            validatedQuantity = validateQuantity(body.quantity, product.stock, 1000);
+        } catch (error) {
+            if (error instanceof Error) {
+                return NextResponse.json(
+                    { 
+                        error: error.message,
+                        maxQuantity: product.stock
+                    },
+                    { status: 400 }
+                );
+            }
+            throw error;
+        }
+
+        // STEP 4: If quantity is 0, delete the item instead
+        if (validatedQuantity === 0) {
+            try {
+                await prisma.cartItem.delete({
+                    where: {
+                        userId_productId: { userId, productId: validProductId }
+                    }
+                });
+
+                return NextResponse.json({
+                    success: true,
+                    message: 'Item removed from cart'
+                });
+            } catch {
+                // Cart item doesn't exist - that's fine, already removed
+                return NextResponse.json({
+                    success: true,
+                    message: 'Item already removed from cart'
+                });
+            }
+        }
+
+        // STEP 5: Check if cart item exists
+        const existingCartItem = await prisma.cartItem.findUnique({
+            where: {
+                userId_productId: { userId, productId: validProductId }
+            }
+        });
+
+        if (!existingCartItem) {
+            return NextResponse.json(
+                { error: 'Item not in cart' },
+                { status: 404 }
+            );
+        }
+
+        // STEP 6: Update the quantity with validated value
         const updated = await prisma.cartItem.update({
             where: {
-                userId_productId: { userId, productId }
+                userId_productId: { userId, productId: validProductId }
             },
-            data: { quantity },
+            data: { quantity: validatedQuantity },
             include: { product: true }
-        })
+        });
 
         return NextResponse.json({
             id: updated.product.id,
@@ -57,43 +110,70 @@ export async function PATCH(request: NextRequest, { params }: Props) {
             imageUrl: updated.product.imageUrl,
             slug: updated.product.slug,
             stock: updated.product.stock
-        })
+        });
     } catch (error) {
         console.error('Error updating cart item:', error);
+        
+        // Don't expose internal error details
         return NextResponse.json(
             { error: "Failed to update cart item" },
             { status: 500 }
-        )
+        );
     }
 }
 
-//DELETE - Remove a specific item from cart
+// DELETE - Remove a specific item from cart
 export async function DELETE(request: NextRequest, { params }: Props) {
     try {
-        const { userId } = await auth()
+        const { userId } = await auth();
 
         if (!userId) {
-            return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+            return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
         }
 
-        const { productId } = await params
+        const { productId } = await params;
 
-        // Delete the item from the cart
-        await prisma.cartItem.delete({
-            where: {
-                userId_productId: { userId, productId }
+        // STEP 1: Validate product ID format
+        const validProductId = validateProductId(productId);
+        if (!validProductId) {
+            return NextResponse.json(
+                { error: 'Invalid product ID' },
+                { status: 400 }
+            );
+        }
+
+        // STEP 2: Try to delete (handle case where item doesn't exist)
+        try {
+            await prisma.cartItem.delete({
+                where: {
+                    userId_productId: { userId, productId: validProductId }
+                }
+            });
+
+            return NextResponse.json({
+                success: true,
+                message: 'Item removed from cart'
+            });
+        } catch (error) {
+            // Check if error is because item doesn't exist
+            if (error && typeof error === 'object' && 'code' in error && error.code === 'P2025') {
+                // Prisma error P2025: Record not found
+                // This is actually fine - item already doesn't exist
+                return NextResponse.json({
+                    success: true,
+                    message: 'Item already removed from cart'
+                });
             }
-        })
-
-        return NextResponse.json({
-            success: true,
-            message: 'Item removed from cart'
-        })
+            
+            // Other error - re-throw
+            throw error;
+        }
     } catch (error) {
-        console.error('Error removing cart item:', error)
+        console.error('Error removing cart item:', error);
+        
         return NextResponse.json(
             { error: "Failed to remove cart item" },
             { status: 500 }
-        )
+        );
     }
 }

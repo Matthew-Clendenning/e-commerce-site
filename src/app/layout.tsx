@@ -3,6 +3,7 @@ import './globals.css'
 import type { Metadata } from 'next'
 import Navigation from '@/components/Navigation'
 import CartSidebar from '@/components/CartSidebar'
+import CartSyncHandler from '@/components/CartSyncHandler'
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://e-commerce-site-eight-blush.vercel.app"),
@@ -59,10 +60,14 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <ClerkProvider>
+    <ClerkProvider
+      afterMultiSessionSingleSignOutUrl="/"
+      afterSignOutUrl="/"
+    >
       <html lang="en">
         <body>
           <Navigation />
+          <CartSyncHandler />
           {children}
           <CartSidebar />
         </body>

@@ -1,6 +1,8 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { useUser } from '@clerk/nextjs'
+import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import styles from './admin.module.css'
 
@@ -32,6 +34,9 @@ type Category = {
 type TabType = 'products' | 'categories'
 
 export default function AdminPage() {
+  const { user, isLoaded } = useUser()
+  const router = useRouter()
+
   const [activeTab, setActiveTab] = useState<TabType>('products')
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -59,10 +64,46 @@ export default function AdminPage() {
     description: ''
   })
 
+  // Check admin access
   useEffect(() => {
-    fetchProducts()
-    fetchCategories()
-  }, [])
+    if (isLoaded && !user) {
+      router.push('/sign-in')
+    } else if (isLoaded && user) {
+      const isAdmin = user.publicMetadata?.role === 'admin'
+      
+      if (!isAdmin) {
+        alert('Access denied: Admin privileges required')
+        router.push('/')
+      }
+    }
+  }, [isLoaded, user, router])
+
+  useEffect(() => {
+    if (isLoaded && user?.publicMetadata?.role === 'admin') {
+      fetchProducts()
+      fetchCategories()
+    }
+  }, [isLoaded, user])
+
+  // Show loading while checking permissions
+  if (!isLoaded) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loading}>Checking permissions...</div>
+      </div>
+    )
+  }
+
+  // Double-check admin status
+  const isAdmin = user?.publicMetadata?.role === 'admin'
+  
+  if (!isAdmin) {
+    return (
+      <div className={styles.container}>
+        <div className={styles.loading}>Redirecting...</div>
+      </div>
+    )
+  }
 
   const fetchProducts = async () => {
     setLoading(true)

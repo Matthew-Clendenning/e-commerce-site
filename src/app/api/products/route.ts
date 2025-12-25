@@ -1,12 +1,20 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
-import { auth } from '@clerk/nextjs/server'
+import { requireAdmin } from '@/lib/auth'
 import { Product, Category } from '@prisma/client'
+import {
+  validatePrice,
+  validateStock,
+  validateProductName,
+  validateDescription,
+  validateId
+} from '@/lib/validation'
 
 type ProductWithCategory = Product & {
   category: Category
 }
 
+// GET - Public endpoint
 export async function GET(request: NextRequest) {
   try {
     const searchParams = request.nextUrl.searchParams
@@ -41,26 +49,39 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// POST - Admin only
 export async function POST(request: NextRequest) {
   try {
-    // Check if user is authenticated
-    const { userId } = await auth()
-    
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
+    // CRITICAL: Require admin access
+    await requireAdmin()
 
     const body = await request.json()
-    const { name, description, price, stock, categoryId, imageUrl } = body
 
-    // Validation
-    if (!name || !price || !categoryId) {
+    // Validate required fields exist
+    if (!body.name || !body.price || !body.categoryId) {
       return NextResponse.json(
         { error: 'Name, price, and category are required' },
         { status: 400 }
+      )
+    }
+
+    // Validate and sanitize all inputs
+    const name = validateProductName(body.name)
+    const price = validatePrice(body.price)
+    const stock = validateStock(body.stock ?? 0)
+    const categoryId = validateId(body.categoryId)
+    const description = validateDescription(body.description)
+    const imageUrl = body.imageUrl ? String(body.imageUrl).trim() : null
+
+    // Verify category exists
+    const category = await prisma.category.findUnique({
+      where: { id: categoryId }
+    })
+
+    if (!category) {
+      return NextResponse.json(
+        { error: 'Category not found' },
+        { status: 404 }
       )
     }
 
@@ -86,11 +107,11 @@ export async function POST(request: NextRequest) {
       data: {
         name,
         slug,
-        description: description || null,
-        price: parseFloat(price),
-        stock: parseInt(stock) || 0,
+        description,
+        price,
+        stock,
         categoryId,
-        imageUrl: imageUrl || null,
+        imageUrl,
       },
       include: {
         category: true
@@ -103,8 +124,21 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Error creating product:', error)
+
+    if (error instanceof Error) {
+      if (error.message === 'Unauthorized') {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+      }
+      if (error.message === 'Forbidden: Admin access required') {
+        return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+      }
+      if (error.message.includes('must be') || error.message.includes('cannot')) {
+        return NextResponse.json({ error: error.message }, { status: 400 })
+      }
+    }
+
     return NextResponse.json(
-      { error: 'Failed to create product', details: error },
+      { error: 'Failed to create product' },
       { status: 500 }
     )
   }

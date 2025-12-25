@@ -1,9 +1,16 @@
+'use client'
+
 import Link from 'next/link'
-import { UserButton, SignInButton, SignedIn, SignedOut } from '@clerk/nextjs'
+import { UserButton, SignInButton, SignedIn, SignedOut, useUser } from '@clerk/nextjs'
 import CartButton from './CartButton'
 import styles from './Navigation.module.css'
 
 export default function Navigation() {
+  const { user } = useUser()
+  
+  // Check if current user is admin
+  const isAdmin = user?.publicMetadata?.role === 'admin'
+
   return (
     <nav className={styles.nav}>
       <div className={styles.container}>
@@ -18,17 +25,20 @@ export default function Navigation() {
           <Link href="/products" className={styles.link}>
             Products
           </Link>
+          
+          {/* Only show Admin link if user is admin */}
           <SignedIn>
-            <Link href="/admin" className={styles.link}>
-              Admin
-            </Link>
+            {isAdmin && (
+              <Link href="/admin" className={styles.link}>
+                Admin
+              </Link>
+            )}
           </SignedIn>
         </div>
 
         <div className={styles.auth}>
-          <SignedIn>
-            <CartButton />
-          </SignedIn>
+          <CartButton />
+          
           <SignedOut>
             <SignInButton mode="modal">
               <button className={styles.signInButton}>
@@ -37,7 +47,7 @@ export default function Navigation() {
             </SignInButton>
           </SignedOut>
           <SignedIn>
-            <UserButton afterSignOutUrl="/" />
+            <UserButton />
           </SignedIn>
         </div>
       </div>
