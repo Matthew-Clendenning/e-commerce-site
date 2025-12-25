@@ -2,6 +2,7 @@ import { ClerkProvider } from '@clerk/nextjs'
 import './globals.css'
 import type { Metadata } from 'next'
 import Navigation from '@/components/Navigation'
+import CartSidebar from '@/components/CartSidebar'
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://e-commerce-site-eight-blush.vercel.app"),
@@ -63,6 +64,7 @@ export default function RootLayout({
         <body>
           <Navigation />
           {children}
+          <CartSidebar />
         </body>
       </html>
     </ClerkProvider>

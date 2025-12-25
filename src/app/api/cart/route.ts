@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma';
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
 import { NextResponse } from 'next/server';
 
 // GET - fetch user's cart
@@ -52,6 +52,25 @@ export async function POST(request: Request) {
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, {status: 401 });
         }
+
+        const clerkUser = await currentUser();
+
+        if (!clerkUser) {
+            return NextResponse.json({ error: 'User not found' }, {status: 404 });
+        }
+
+        await prisma.user.upsert({
+            where: { id: userId },
+            update: {
+                email: clerkUser.emailAddresses[0]?.emailAddress || '',
+                name: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || null,
+            },
+            create: {
+                id: userId,
+                email: clerkUser.emailAddresses[0]?.emailAddress || '',
+                name: `${clerkUser.firstName || ''} ${clerkUser.lastName || ''}`.trim() || null,
+            }
+        });
 
         const { productId } = await request.json();
 

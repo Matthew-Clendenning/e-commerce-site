@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { UserButton, SignInButton, SignedIn, SignedOut } from '@clerk/nextjs'
+import CartButton from './CartButton'
 import styles from './Navigation.module.css'
 
 export default function Navigation() {
@@ -25,6 +26,9 @@ export default function Navigation() {
         </div>
 
         <div className={styles.auth}>
+          <SignedIn>
+            <CartButton />
+          </SignedIn>
           <SignedOut>
             <SignInButton mode="modal">
               <button className={styles.signInButton}>

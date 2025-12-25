@@ -3,6 +3,7 @@ import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
+import AddToCartButton from '@/components/AddToCartButton'
 import styles from './product.module.css'
 
 type Props = {
@@ -159,12 +160,17 @@ export default async function ProductPage({ params }: Props) {
                             <p>{product.description || 'No description available.'}</p>
                         </div>
 
-                        <button
-                            className={styles.addToCart}
+                        <AddToCartButton 
+                            product={{
+                                id: product.id,
+                                name: product.name,
+                                price: price,
+                                imageUrl: product.imageUrl,
+                                slug: product.slug,
+                                stock: product.stock
+                            }}
                             disabled={product.stock === 0}
-                        >
-                            {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-                        </button>
+                        />
 
                         <div className={styles.features}>
                             <h3>Features</h3>
