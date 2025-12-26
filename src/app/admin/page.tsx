@@ -6,6 +6,29 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import styles from './admin.module.css'
 
+type Order = {
+  id: string
+  status: string
+  total: number
+  customerEmail: string
+  customerName: string | null
+  createdAt: string
+  updatedAt: string
+  user: {
+    id: string
+    email: string
+    name: string | null
+  }
+  items: Array<{
+    id: string
+    productId: string
+    name: string
+    price: number
+    quantity: number
+    imageUrl: string | null
+  }>
+}
+
 type Product = {
   id: string
   name: string
@@ -31,12 +54,15 @@ type Category = {
   }
 }
 
-type TabType = 'products' | 'categories'
+type TabType = 'products' | 'categories' | 'orders'
 
 export default function AdminPage() {
   const { user, isLoaded } = useUser()
   const router = useRouter()
 
+  const [orders, setOrders] = useState<Order[]>([])
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [showOrderModal, setShowOrderModal] = useState(false)
   const [activeTab, setActiveTab] = useState<TabType>('products')
   const [products, setProducts] = useState<Product[]>([])
   const [categories, setCategories] = useState<Category[]>([])
@@ -82,6 +108,7 @@ export default function AdminPage() {
     if (isLoaded && user?.publicMetadata?.role === 'admin') {
       fetchProducts()
       fetchCategories()
+      fetchOrders()
     }
   }, [isLoaded, user])
 
@@ -103,6 +130,43 @@ export default function AdminPage() {
         <div className={styles.loading}>Redirecting...</div>
       </div>
     )
+  }
+
+  const updateOrderStatus = async (orderId: string, newStatus: string) => {
+    setSaving(true)
+    try {
+      const response = await fetch(`/api/admin/orders/${orderId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ status: newStatus })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update order')
+      }
+
+      await fetchOrders()
+      setSelectedOrder(null)
+      setShowOrderModal(false)
+      alert('Order status updated successfully!')
+    } catch (error) {
+      console.error('Error updating order:', error)
+      alert(`Failed to update order: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const fetchOrders = async () => {
+    try {
+      const response = await fetch('/api/admin/orders')
+      const data = await response.json()
+      setOrders(data)
+    } catch (error) {
+      console.error('Error fetching orders:', error)
+    }
   }
 
   const fetchProducts = async () => {
@@ -324,6 +388,12 @@ export default function AdminPage() {
           onClick={() => setActiveTab('categories')}
         >
           Categories ({categories.length})
+        </button>
+        <button
+          className={activeTab === 'orders' ? styles.tabActive : styles.tab}
+          onClick={() => setActiveTab('orders')}
+        >
+          Orders ({orders.length})
         </button>
       </div>
 
@@ -671,6 +741,212 @@ export default function AdminPage() {
               </div>
             ))}
           </div>
+        </>
+      )}
+      {activeTab === 'orders' && (
+        <>
+          <div className={styles.sectionHeader}>
+            <h2>Order Management</h2>
+          </div>
+
+          <div className={styles.stats}>
+            <div className={styles.stat}>
+              <div className={styles.statValue}>{orders.length}</div>
+              <div className={styles.statLabel}>Total Orders</div>
+            </div>
+            <div className={styles.stat}>
+              <div className={styles.statValue}>
+                {orders.filter(o => o.status === 'PROCESSING').length}
+              </div>
+              <div className={styles.statLabel}>Processing</div>
+            </div>
+            <div className={styles.stat}>
+              <div className={styles.statValue}>
+                {orders.filter(o => o.status === 'SHIPPED').length}
+              </div>
+              <div className={styles.statLabel}>Shipped</div>
+            </div>
+            <div className={styles.stat}>
+              <div className={styles.statValue}>
+                ${orders.reduce((sum, o) => sum + o.total, 0).toFixed(2)}
+              </div>
+              <div className={styles.statLabel}>Total Revenue</div>
+            </div>
+          </div>
+
+          <div className={styles.tableContainer}>
+            <table className={styles.table}>
+              <thead>
+                <tr>
+                  <th>Order ID</th>
+                  <th>Customer</th>
+                  <th>Items</th>
+                  <th>Total</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th>Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {orders.map((order) => (
+                  <tr key={order.id}>
+                    <td>
+                      <div className={styles.orderId}>
+                        #{order.id.slice(-8)}
+                      </div>
+                    </td>
+                    <td>
+                      <div>
+                        <div className={styles.customerName}>
+                          {order.customerName || 'N/A'}
+                        </div>
+                        <div className={styles.customerEmail}>
+                          {order.customerEmail}
+                        </div>
+                      </div>
+                    </td>
+                    <td>{order.items.length} items</td>
+                    <td>${order.total.toFixed(2)}</td>
+                    <td>
+                      <span className={`${styles.badge} ${styles[order.status.toLowerCase()]}`}>
+                        {order.status}
+                      </span>
+                    </td>
+                    <td>
+                      {new Date(order.createdAt).toLocaleDateString('en-US', {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric'
+                      })}
+                    </td>
+                    <td>
+                      <button
+                        onClick={() => {
+                          setSelectedOrder(order)
+                          setShowOrderModal(true)
+                        }}
+                        className={styles.editButton}
+                      >
+                        View Details
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* Order Details Modal */}
+          {showOrderModal && selectedOrder && (
+            <div className={styles.modal}>
+              <div className={styles.modalContent} style={{ maxWidth: '800px' }}>
+                <div className={styles.modalHeader}>
+                  <h2>Order Details - #{selectedOrder.id.slice(-8)}</h2>
+                  <button
+                    onClick={() => {
+                      setShowOrderModal(false)
+                      setSelectedOrder(null)
+                    }}
+                    className={styles.closeButton}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className={styles.form}>
+                  {/* Customer Info */}
+                  <div className={styles.formGroup}>
+                    <label>Customer Information</label>
+                    <div style={{ background: '#f9fafb', padding: '15px', borderRadius: '8px' }}>
+                      <p style={{ margin: '5px 0' }}><strong>Name:</strong> {selectedOrder.customerName || 'N/A'}</p>
+                      <p style={{ margin: '5px 0' }}><strong>Email:</strong> {selectedOrder.customerEmail}</p>
+                    </div>
+                  </div>
+
+                  {/* Order Items */}
+                  <div className={styles.formGroup}>
+                    <label>Order Items</label>
+                    <div style={{ border: '1px solid #e5e7eb', borderRadius: '8px', overflow: 'hidden' }}>
+                      {selectedOrder.items.map(item => (
+                        <div
+                          key={item.id}
+                          style={{
+                            display: 'flex',
+                            gap: '15px',
+                            padding: '15px',
+                            borderBottom: '1px solid #f3f4f6',
+                            alignItems: 'center'
+                          }}
+                        >
+                          {item.imageUrl && (
+                            <Image
+                              src={item.imageUrl}
+                              alt={item.name}
+                              width={50}
+                              height={50}
+                              style={{ borderRadius: '6px', objectFit: 'cover' }}
+                            />
+                          )}
+                          <div style={{ flex: 1 }}>
+                            <div style={{ fontWeight: 600 }}>{item.name}</div>
+                            <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                              ${item.price.toFixed(2)} × {item.quantity}
+                            </div>
+                          </div>
+                          <div style={{ fontWeight: 600 }}>
+                            ${(item.price * item.quantity).toFixed(2)}
+                          </div>
+                        </div>
+                      ))}
+                      <div style={{ padding: '15px', background: '#f9fafb', fontWeight: 700, fontSize: '18px', textAlign: 'right' }}>
+                        Total: ${selectedOrder.total.toFixed(2)}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Order Status */}
+                  <div className={styles.formGroup}>
+                    <label>Update Order Status</label>
+                    <select
+                      value={selectedOrder.status}
+                      onChange={(e) => updateOrderStatus(selectedOrder.id, e.target.value)}
+                      className={styles.formSelect}
+                      disabled={saving}
+                    >
+                      <option value="PENDING">Pending</option>
+                      <option value="PROCESSING">Processing</option>
+                      <option value="SHIPPED">Shipped</option>
+                      <option value="DELIVERED">Delivered</option>
+                      <option value="CANCELLED">Cancelled</option>
+                      <option value="REFUNDED">Refunded</option>
+                    </select>
+                  </div>
+
+                  {/* Dates */}
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label>Order Date</label>
+                      <input
+                        type="text"
+                        value={new Date(selectedOrder.createdAt).toLocaleString()}
+                        disabled
+                        className={styles.formInput}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Last Updated</label>
+                      <input
+                        type="text"
+                        value={new Date(selectedOrder.updatedAt).toLocaleString()}
+                        disabled
+                        className={styles.formInput}
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </>
       )}
     </div>

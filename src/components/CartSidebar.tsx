@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import Link from 'next/link'
 import { useCartStore } from '@/store/cartStore'
 import CartItem from './CartItem'
 import styles from './CartSidebar.module.css'
@@ -102,9 +103,13 @@ export default function CartSidebar() {
                                     <span className={styles.totalPrice}>${total.toFixed(2)}</span>
                                 </div>
 
-                                <button className={styles.checkoutButton}>
+                                <Link 
+                                    href="/checkout" 
+                                    className={styles.checkoutButton}
+                                    onClick={() => toggleCart()}
+                                >
                                     Proceed to Checkout
-                                </button>
+                                </Link>
 
                                 <button
                                     onClick={clearCart}

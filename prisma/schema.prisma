@@ -37,48 +37,65 @@ model Product {
   price       Decimal  @db.Decimal(10, 2)
   imageUrl    String?
   stock       Int      @default(0)
+  categoryId  String
+  category    Category @relation(fields: [categoryId], references: [id])
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
   
-  categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
-  
-  orderItems  OrderItem[]
   cartItems   CartItem[]
+  orderItems  OrderItem[]
   
   @@index([categoryId])
   @@index([slug])
 }
 
 model Order {
-  id              String      @id @default(cuid())
-  orderNumber     String      @unique
-  status          OrderStatus @default(PENDING)
-  total           Decimal     @db.Decimal(10, 2)
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   
-  userId          String
-  user            User        @relation(fields: [userId], references: [id])
+  // Order details
+  status    OrderStatus @default(PENDING)
+  total     Decimal  @db.Decimal(10, 2)
   
-  shippingAddress String
-  createdAt       DateTime    @default(now())
-  updatedAt       DateTime    @updatedAt
+  // Stripe
+  stripeSessionId     String?  @unique
+  stripePaymentIntent String?  @unique
   
-  items           OrderItem[]
+  // Customer info
+  customerEmail String
+  customerName  String?
+  
+  // Shipping address
+  shippingAddress Json?
+  
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  
+  // Relations
+  items OrderItem[]
   
   @@index([userId])
-  @@index([orderNumber])
+  @@index([status])
+  @@index([createdAt])
 }
 
 model OrderItem {
-  id        String  @id @default(cuid())
-  quantity  Int
-  price     Decimal @db.Decimal(10, 2)
-  
+  id        String @id @default(cuid())
   orderId   String
-  order     Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
   
   productId String
   product   Product @relation(fields: [productId], references: [id])
+  
+  // Snapshot of product at time of purchase
+  name      String
+  price     Decimal @db.Decimal(10, 2)
+  quantity  Int
+  imageUrl  String?
+  
+  createdAt DateTime @default(now())
   
   @@index([orderId])
   @@index([productId])

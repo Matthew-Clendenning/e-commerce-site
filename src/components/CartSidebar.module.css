@@ -195,6 +195,30 @@
     border-color: #9ca3af;
 }
 
+.checkoutSection {
+  padding: 20px;
+  border-top: 1px solid #e5e7eb;
+}
+
+.checkoutButton {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background: #2563eb;
+  color: white;
+  text-align: center;
+  text-decoration: none;
+  border-radius: 8px;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.checkoutButton:hover {
+  background: #1d4ed8;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
 @media (max-width: 768px) {
     .sidebar {
         max-width: 100%;

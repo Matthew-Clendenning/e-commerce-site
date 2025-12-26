@@ -532,6 +532,54 @@
   color: #6b7280;
 }
 
+/* Order specific styles */
+.orderId {
+  font-family: monospace;
+  font-weight: 600;
+  color: #4b5563;
+}
+
+.customerName {
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.customerEmail {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Status badges */
+.pending {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.processing {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.shipped {
+  background: #e0e7ff;
+  color: #4338ca;
+}
+
+.delivered {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.cancelled {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.refunded {
+  background: #f3f4f6;
+  color: #374151;
+}
+
 @media (max-width: 768px) {
   .header h1 {
     font-size: 32px;
