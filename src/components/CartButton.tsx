@@ -1,7 +1,7 @@
 'use client'
 
 import { useCartStore } from '@/store/cartStore'
-import styles from './CartButton.module.css'
+import styles from '../styles/CartButton.module.css'
 
 export default function CartButton() {
   const { toggleCart, items } = useCartStore()

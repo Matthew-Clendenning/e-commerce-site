@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useCartStore } from '@/store/cartStore'
 import { useUser } from '@clerk/nextjs'
 import Image from 'next/image'
-import styles from './checkout.module.css'
+import styles from '../../styles/checkout.module.css'
 
 export default function CheckoutPage() {
   const router = useRouter()

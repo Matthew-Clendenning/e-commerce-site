@@ -1,5 +1,5 @@
 import Link from 'next/link'
-import styles from './unauthorized.module.css'
+import styles from '../../styles/unauthorized.module.css'
 
 export default function UnauthorizedPage() {
   return (

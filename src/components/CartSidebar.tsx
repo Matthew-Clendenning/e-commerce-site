@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 import Link from 'next/link'
 import { useCartStore } from '@/store/cartStore'
 import CartItem from './CartItem'
-import styles from './CartSidebar.module.css'
+import styles from '../styles/CartSidebar.module.css'
 
 export default function CartSidebar() {
     // Get store data

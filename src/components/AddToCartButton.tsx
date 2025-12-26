@@ -2,7 +2,7 @@
 
 import { useCartStore } from '@/store/cartStore'
 import { useState } from 'react'
-import styles from './AddToCartButton.module.css'
+import styles from '../styles/AddToCartButton.module.css'
 
 type Props = {
     product: {

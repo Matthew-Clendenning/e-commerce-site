@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
-import styles from './admin.module.css'
+import styles from '../../styles/admin.module.css'
 
 type Order = {
   id: string

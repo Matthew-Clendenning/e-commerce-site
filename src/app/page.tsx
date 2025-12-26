@@ -1,6 +1,6 @@
 import { SignedIn, SignedOut } from '@clerk/nextjs'
 import Link from 'next/link'
-import styles from './page.module.css'
+import styles from '../styles/page.module.css'
 
 export default function Home() {
   const jsonLd = {

@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { UserButton, SignInButton, SignedIn, SignedOut, useUser } from '@clerk/nextjs'
 import CartButton from './CartButton'
-import styles from './Navigation.module.css'
+import styles from '../styles/Navigation.module.css'
 
 export default function Navigation() {
   const { user } = useUser()

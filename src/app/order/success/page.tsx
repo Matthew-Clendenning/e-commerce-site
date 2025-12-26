@@ -4,7 +4,7 @@ import { useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { useCartStore } from '@/store/cartStore'
-import styles from './success.module.css'
+import styles from '../../../styles/success.module.css'
 
 function SuccessContent() {
   const searchParams = useSearchParams()

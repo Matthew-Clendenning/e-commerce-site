@@ -4,7 +4,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
 import AddToCartButton from '@/components/AddToCartButton'
-import styles from './product.module.css'
+import styles from '../../../styles/product.module.css'
 
 type Props = {
     params: Promise<{ slug: string }>

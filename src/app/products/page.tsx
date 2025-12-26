@@ -2,7 +2,7 @@ import { Metadata } from 'next'
 import { prisma } from '@/lib/prisma'
 import ProductCard from '@/components/ProductCard'
 import ProductsFilter from '@/components/ProductsFilter'
-import styles from './products.module.css'
+import styles from '../../styles/products.module.css'
 
 export const metadata: Metadata = {
   title: 'Shop All Products',

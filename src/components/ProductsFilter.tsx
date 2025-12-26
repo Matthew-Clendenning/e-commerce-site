@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import styles from './ProductsFilter.module.css'
+import styles from '../styles/ProductsFilter.module.css'
 
 type Category = {
   id: string

@@ -3,7 +3,7 @@
 import { useCartStore } from '@/store/cartStore'
 import Image from 'next/image'
 import Link from 'next/link'
-import styles from './CartItem.module.css'
+import styles from '../styles/CartItem.module.css'
 
 type CartItemProps = {
     item: {

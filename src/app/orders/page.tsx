@@ -5,7 +5,7 @@ import { useAuth } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import styles from './orders.module.css'
+import styles from '../../styles/orders.module.css'
 
 type OrderItem = {
   id: string
