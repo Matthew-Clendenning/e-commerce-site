@@ -4,6 +4,7 @@ import type { Metadata } from 'next'
 import Navigation from '@/components/Navigation'
 import CartSidebar from '@/components/CartSidebar'
 import CartSyncHandler from '@/components/CartSyncHandler'
+import { Toaster } from 'sonner'
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://e-commerce-site-eight-blush.vercel.app"),
@@ -70,6 +71,12 @@ export default function RootLayout({
           <CartSyncHandler />
           {children}
           <CartSidebar />
+          <Toaster
+            position="top-right"
+            richColors
+            closeButton
+            duration={4000}
+          />
         </body>
       </html>
     </ClerkProvider>

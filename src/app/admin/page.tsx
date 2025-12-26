@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { useUser } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
+import { toast } from 'sonner'
 import styles from '../../styles/admin.module.css'
 
 type Order = {
@@ -231,7 +232,7 @@ export default function AdminPage() {
       await fetchProducts()
       setEditingId(null)
       setEditForm({ name: '', price: '', stock: '', description: '' })
-      alert('Product updated successfully!')
+      toast.success('Product updated successfully!')
     } catch (error) {
       console.error('Error updating product:', error)
       alert(`Failed to update product: ${error instanceof Error ? error.message : 'Unknown error'}`)
