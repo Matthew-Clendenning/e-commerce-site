@@ -57,11 +57,18 @@ function getTestDatabaseUrl(): string {
 const connectionString = getTestDatabaseUrl()
 console.log('Using test database:', connectionString.replace(/:[^:@]+@/, ':****@'))
 
+// Detect if we're running in CI (GitHub Actions sets CI=true)
+// CI uses a local PostgreSQL container without SSL
+// Local development uses Supabase which requires SSL
+const isCI = process.env.CI === 'true'
+console.log(`Environment: ${isCI ? 'CI (no SSL)' : 'Local (SSL enabled)'}`)
+
 // Create a Prisma client configured for the test database
 // Prisma 7 with driverAdapters requires an adapter to be provided
 const pool = new Pool({
   connectionString,
-  ssl: { rejectUnauthorized: false },
+  // Only use SSL for non-CI environments (Supabase requires SSL, local PostgreSQL doesn't)
+  ssl: isCI ? false : { rejectUnauthorized: false },
 })
 const adapter = new PrismaPg(pool)
 const prisma = new PrismaClient({ adapter })
