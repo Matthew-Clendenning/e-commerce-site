@@ -115,14 +115,17 @@ test.describe('Smoke Tests @smoke', () => {
   test('navigation between pages works', async ({ page }) => {
     // Start at home
     await page.goto('/')
+    await page.waitForLoadState('networkidle')
 
     // Navigate to products (use exact: true to avoid matching "Browse All Products" CTA)
     await page.getByRole('link', { name: 'Products', exact: true }).click()
-    await expect(page).toHaveURL('/products')
+    // Wait for navigation to complete (Next.js client-side navigation)
+    await page.waitForURL('/products', { timeout: 10000 })
+    await page.waitForLoadState('networkidle')
 
     // Navigate back to home
     await page.getByRole('link', { name: 'Home' }).click()
-    await expect(page).toHaveURL('/')
+    await page.waitForURL('/', { timeout: 10000 })
   })
 
   /**
