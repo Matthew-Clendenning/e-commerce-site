@@ -1,0 +1,182 @@
+# ==============================================================================
+# E2E Tests Workflow
+# ==============================================================================
+# This workflow runs Playwright end-to-end tests on push and pull requests.
+#
+# WHAT IT DOES:
+# 1. Sets up a PostgreSQL test database
+# 2. Installs dependencies and Playwright browsers
+# 3. Runs Playwright tests
+# 4. Uploads test reports as artifacts
+#
+# WHEN IT RUNS:
+# - On push to main or develop branches
+# - On pull requests targeting main
+#
+# ARTIFACTS:
+# - playwright-report: HTML test report (viewable in browser)
+# - test-results: Screenshots/videos of failed tests
+# ==============================================================================
+
+name: E2E Tests
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main]
+
+jobs:
+  e2e-tests:
+    name: Run E2E Tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    # ==============================================================================
+    # SERVICE CONTAINERS
+    # ==============================================================================
+    # PostgreSQL runs alongside our tests, providing a real database
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: ecommerce_test
+        ports:
+          - 5432:5432
+        # Health check ensures DB is ready before tests start
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      # ==============================================================================
+      # SETUP STEPS
+      # ==============================================================================
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      # Only install Chromium for CI (faster than all browsers)
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      # ==============================================================================
+      # DATABASE SETUP
+      # ==============================================================================
+
+      # Create .env.test.local with CI-specific values
+      # This file is loaded by npm run dev:test for the Next.js server
+      - name: Create test environment file
+        run: |
+          echo "DATABASE_URL=postgresql://postgres:postgres@localhost:5432/ecommerce_test" > .env.test.local
+          echo "BYPASS_AUTH=true" >> .env.test.local
+          echo "TEST_USER_ID=user_test_regular_123" >> .env.test.local
+          echo "TEST_ADMIN_USER_ID=user_test_admin_456" >> .env.test.local
+          echo "PLAYWRIGHT_TEST_MODE=true" >> .env.test.local
+          echo "SEED_TEST_DATA=true" >> .env.test.local
+
+      - name: Setup test database
+        run: |
+          npx prisma generate
+          npx prisma db push --skip-generate
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ecommerce_test
+
+      # ==============================================================================
+      # RUN TESTS
+      # ==============================================================================
+
+      - name: Run Playwright tests
+        run: npx playwright test --project=chromium
+        env:
+          # Core settings
+          CI: true
+          NODE_ENV: test
+
+          # Database (uses the PostgreSQL service container)
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ecommerce_test
+
+          # Application URLs
+          NEXT_PUBLIC_APP_URL: http://localhost:3000
+          TEST_BASE_URL: http://localhost:3000
+
+          # Auth bypass (uses mock authentication instead of real Clerk)
+          BYPASS_AUTH: true
+          TEST_USER_ID: user_test_regular_123
+          TEST_ADMIN_USER_ID: user_test_admin_456
+
+          # Test flags
+          PLAYWRIGHT_TEST_MODE: true
+          SEED_TEST_DATA: true
+
+          # =====================================================
+          # GITHUB SECRETS (Configure in repo Settings > Secrets)
+          # =====================================================
+          # These are optional - only needed if testing real Clerk/Stripe flows
+          #
+          # To add secrets:
+          # 1. Go to your repo on GitHub
+          # 2. Settings > Secrets and variables > Actions
+          # 3. Click "New repository secret"
+          #
+          # NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY: ${{ secrets.CLERK_TEST_PK }}
+          # CLERK_SECRET_KEY: ${{ secrets.CLERK_TEST_SK }}
+          # STRIPE_SECRET_KEY: ${{ secrets.STRIPE_TEST_SK }}
+          # STRIPE_WEBHOOK_SECRET: ${{ secrets.STRIPE_WEBHOOK_SECRET }}
+
+      # ==============================================================================
+      # UPLOAD ARTIFACTS
+      # ==============================================================================
+
+      # Always upload HTML report (even if tests pass)
+      - name: Upload Playwright report
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14
+
+      # Upload screenshots/videos only on failure
+      - name: Upload test results
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: test-results
+          path: test-results/
+          retention-days: 7
+
+  # ==============================================================================
+  # OPTIONAL: Full browser matrix (run manually or on release)
+  # ==============================================================================
+  # Uncomment this job to test on all browsers
+  #
+  # e2e-full-matrix:
+  #   name: E2E Full Browser Matrix
+  #   runs-on: ubuntu-latest
+  #   if: github.event_name == 'workflow_dispatch'
+  #   strategy:
+  #     matrix:
+  #       browser: [chromium, firefox, webkit]
+  #   steps:
+  #     - uses: actions/checkout@v4
+  #     - uses: actions/setup-node@v4
+  #       with:
+  #         node-version: '20'
+  #         cache: 'npm'
+  #     - run: npm ci
+  #     - run: npx playwright install --with-deps ${{ matrix.browser }}
+  #     - run: npx playwright test --project=${{ matrix.browser }}
