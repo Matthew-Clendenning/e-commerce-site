@@ -2,6 +2,7 @@
 
 import { useCartStore } from '@/store/cartStore'
 import { useState } from 'react'
+import { toast } from 'sonner'
 import styles from '../styles/AddToCartButton.module.css'
 
 type Props = {
@@ -32,6 +33,7 @@ export default function AddToCartButton({ product, disabled }: Props) {
             stock: product.stock
         })
 
+        toast.success(`${product.name} added to cart`)
         toggleCart()
         setIsAdding(false)
     }

@@ -58,7 +58,7 @@ jobs:
       # ==============================================================================
 
       - name: Checkout code
-        uses: actions/checkout@v4
+        uses: actions/checkout@v3
 
       - name: Setup Node.js
         uses: actions/setup-node@v4
@@ -91,7 +91,7 @@ jobs:
       - name: Setup test database
         run: |
           npx prisma generate
-          npx prisma db push --skip-generate
+          npx prisma db push
         env:
           DATABASE_URL: postgresql://postgres:postgres@localhost:5432/ecommerce_test
 

@@ -1,6 +1,6 @@
 generator client {
   provider = "prisma-client-js"
-  previewFeatures = ["driverAdapters"]
+  // Note: driverAdapters is now enabled by default in Prisma 7+
 }
 
 datasource db {

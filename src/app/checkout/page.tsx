@@ -5,7 +5,31 @@ import { useRouter } from 'next/navigation'
 import { useCartStore } from '@/store/cartStore'
 import { useUser } from '@clerk/nextjs'
 import Image from 'next/image'
+import { toast } from 'sonner'
 import styles from '../../styles/checkout.module.css'
+
+/**
+ * Get test user from cookie (for E2E testing)
+ * Only works when BYPASS_AUTH is enabled in test mode
+ */
+function getTestUser(): { email: string; firstName: string; lastName: string } | null {
+  if (typeof document === 'undefined') return null
+
+  const cookies = document.cookie.split(';').reduce((acc, cookie) => {
+    const [key, val] = cookie.trim().split('=')
+    acc[key] = val
+    return acc
+  }, {} as Record<string, string>)
+
+  const testUserCookie = cookies['__test_auth_user']
+  if (!testUserCookie) return null
+
+  try {
+    return JSON.parse(decodeURIComponent(testUserCookie))
+  } catch {
+    return null
+  }
+}
 
 export default function CheckoutPage() {
   const router = useRouter()
@@ -13,13 +37,22 @@ export default function CheckoutPage() {
   const { items, totalPrice } = useCartStore()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [testUser, setTestUser] = useState<ReturnType<typeof getTestUser>>(null)
 
-  // Redirect if not signed in
+  // Check for test user on mount
   useEffect(() => {
-    if (isLoaded && !user) {
+    setTestUser(getTestUser())
+  }, [])
+
+  // The effective user is either Clerk user or test user
+  const effectiveUser = user || testUser
+
+  // Redirect if not signed in (and no test user)
+  useEffect(() => {
+    if (isLoaded && !user && !testUser) {
       router.push('/sign-in?redirect_url=/checkout')
     }
-  }, [isLoaded, user, router])
+  }, [isLoaded, user, testUser, router])
 
   // Redirect if cart is empty
   useEffect(() => {
@@ -48,12 +81,14 @@ export default function CheckoutPage() {
         window.location.href = data.url
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Something went wrong')
+      const errorMessage = err instanceof Error ? err.message : 'Something went wrong'
+      setError(errorMessage)
+      toast.error(errorMessage)
       setLoading(false)
     }
   }
 
-  if (!isLoaded || !user || items.length === 0) {
+  if (!isLoaded || !effectiveUser || items.length === 0) {
     return (
       <div className={styles.container}>
         <div className={styles.loading}>Loading...</div>
@@ -121,12 +156,12 @@ export default function CheckoutPage() {
             <div className={styles.infoCard}>
               <div className={styles.infoRow}>
                 <strong>Email:</strong>
-                <span>{user.emailAddresses[0]?.emailAddress}</span>
+                <span>{user?.emailAddresses?.[0]?.emailAddress || testUser?.email}</span>
               </div>
               <div className={styles.infoRow}>
                 <strong>Name:</strong>
                 <span>
-                  {user.firstName} {user.lastName}
+                  {user?.firstName || testUser?.firstName} {user?.lastName || testUser?.lastName}
                 </span>
               </div>
             </div>

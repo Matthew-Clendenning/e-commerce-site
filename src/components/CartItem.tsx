@@ -3,6 +3,7 @@
 import { useCartStore } from '@/store/cartStore'
 import Image from 'next/image'
 import Link from 'next/link'
+import { toast } from 'sonner'
 import styles from '../styles/CartItem.module.css'
 
 type CartItemProps = {
@@ -42,6 +43,7 @@ export default function CartItem({ item }: CartItemProps) {
 
     const handleRemove = () => {
         removeItem(item.id)
+        toast.success(`${item.name} removed from cart`)
     }
 
     return (
