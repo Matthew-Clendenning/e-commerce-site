@@ -1,9 +1,10 @@
 import { NextResponse } from 'next/server'
 import { auth } from '@clerk/nextjs/server'
 import { prisma } from '@/lib/prisma'
+import { checkRateLimit, getIdentifier } from '@/lib/ratelimit'
 
 // GET - Fetch user's orders
-export async function GET() {
+export async function GET(request: Request) {
   try {
     const { userId } = await auth()
 
@@ -12,6 +13,13 @@ export async function GET() {
         { error: 'Unauthorized' },
         { status: 401 }
       )
+    }
+
+    // Rate limit API requests
+    const identifier = getIdentifier(request, userId)
+    const { success, response } = await checkRateLimit(identifier, 'api')
+    if (!success && response) {
+      return response
     }
 
     const orders = await prisma.order.findMany({
@@ -49,8 +57,7 @@ export async function GET() {
     }))
 
     return NextResponse.json(formattedOrders)
-  } catch (error) {
-    console.error('Error fetching orders:', error)
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch orders' },
       { status: 500 }

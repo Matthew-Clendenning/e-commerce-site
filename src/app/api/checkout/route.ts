@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server'
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { stripe } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
+import { checkRateLimit, getIdentifier } from '@/lib/ratelimit'
 
-export async function POST(_request: Request) {
+export async function POST(request: Request) {
   try {
     const { userId } = await auth()
 
@@ -12,6 +13,13 @@ export async function POST(_request: Request) {
         { error: 'Unauthorized' },
         { status: 401 }
       )
+    }
+
+    // Rate limit checkout attempts
+    const identifier = getIdentifier(request, userId)
+    const { success, response } = await checkRateLimit(identifier, 'checkout')
+    if (!success && response) {
+      return response
     }
 
     const user = await currentUser()
@@ -117,8 +125,7 @@ export async function POST(_request: Request) {
       url: session.url 
     })
 
-  } catch (error) {
-    console.error('Checkout error:', error)
+  } catch {
     return NextResponse.json(
       { error: 'Failed to create checkout session' },
       { status: 500 }

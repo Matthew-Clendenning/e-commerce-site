@@ -22,10 +22,8 @@ export default function CartSyncHandler() {
       previousUserIdRef.current = userId || null
 
       if (isSignedIn && userId) {
-        console.log('Initial load: User signed in, syncing cart')
         syncCartToServer(userId)
       } else {
-        console.log('Initial load: Guest mode')
         loadCart()
       }
       return
@@ -37,21 +35,17 @@ export default function CartSyncHandler() {
 
     // User changed (either signed in, signed out, or switched accounts)
     if (previousUserId !== currentUserId) {
-      console.log(`User changed: ${previousUserId} → ${currentUserId}`)
-      
       // CRITICAL: Clear the old user's cart from localStorage
       clearLocalCart()
-      
+
       if (currentUserId) {
         // New user signed in - sync their cart
-        console.log('New user signed in, syncing cart')
         syncCartToServer(currentUserId)
       } else {
         // User signed out - load guest cart (which is now empty after clear)
-        console.log('User signed out, loading empty guest cart')
         loadCart()
       }
-      
+
       // Update the previous user ID
       previousUserIdRef.current = currentUserId
     }

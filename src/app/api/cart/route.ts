@@ -2,14 +2,22 @@ import { prisma } from '@/lib/prisma'
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { validateProductId } from '@/lib/validation'
+import { checkRateLimit, getIdentifier } from '@/lib/ratelimit'
 
 // GET - fetch user's cart
-export async function GET() {
+export async function GET(request: Request) {
     try {
         const { userId } = await auth();
 
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, {status: 401 });
+        }
+
+        // Rate limit cart operations
+        const identifier = getIdentifier(request, userId)
+        const { success, response } = await checkRateLimit(identifier, 'cart')
+        if (!success && response) {
+            return response
         }
 
         // Fetch cart items with product details
@@ -36,8 +44,7 @@ export async function GET() {
         }))
 
         return NextResponse.json(formattedItems);
-    } catch (error) {
-        console.error('Error fetching cart:', error);
+    } catch {
         return NextResponse.json(
             { error: 'Failed to fetch cart' },
             { status: 500 }
@@ -52,6 +59,13 @@ export async function POST(request: Request) {
 
         if (!userId) {
             return NextResponse.json({ error: 'Unauthorized' }, {status: 401 });
+        }
+
+        // Rate limit cart operations
+        const identifier = getIdentifier(request, userId)
+        const { success, response } = await checkRateLimit(identifier, 'cart')
+        if (!success && response) {
+            return response
         }
 
         const clerkUser = await currentUser();
@@ -160,8 +174,7 @@ export async function POST(request: Request) {
                 stock: created.product.stock
             })
         }
-    } catch (error) {
-        console.error('Error adding to cart:', error);
+    } catch {
         return NextResponse.json(
             { error: 'Failed to add to cart' },
             { status: 500 }
@@ -170,7 +183,7 @@ export async function POST(request: Request) {
 }
 
 // DELETE - Clear entire cart
-export async function DELETE() {
+export async function DELETE(request: Request) {
     try {
         const { userId } = await auth();
 
@@ -178,13 +191,19 @@ export async function DELETE() {
             return NextResponse.json({ error: 'Unauthorized' }, {status: 401 });
         }
 
+        // Rate limit cart operations
+        const identifier = getIdentifier(request, userId)
+        const { success, response } = await checkRateLimit(identifier, 'cart')
+        if (!success && response) {
+            return response
+        }
+
         await prisma.cartItem.deleteMany({
             where: { userId }
         })
 
         return NextResponse.json({ success: true });
-    } catch (error) {
-        console.error('Error clearing cart:', error);
+    } catch {
         return NextResponse.json(
             { error: 'Failed to clear cart' },
             { status: 500 }

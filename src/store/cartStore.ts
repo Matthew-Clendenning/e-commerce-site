@@ -48,13 +48,10 @@ export const useCartStore = create<CartStore>()(
                     if (response.ok) {
                         const items = await response.json()
                         set({ items })
-                    } else if (response.status === 401) {
-                        console.log('Guest mode: Using localStorage cart')
-                    } else {
-                        console.warn(`Cart API returned ${response.status}, using localStorage`)
                     }
+                    // Guest mode or error: silently use localStorage cart
                 } catch {
-                    console.log('Guest mode: Using localStorage cart')
+                    // Guest mode: silently use localStorage cart
                 } finally {
                     set({ isLoading: false })
                 }
@@ -62,16 +59,14 @@ export const useCartStore = create<CartStore>()(
 
             syncCartToServer: async (userId: string) => {
                 const state = get()
-                
+
                 // If switching users, clear everything first
                 if (state.lastSyncedUserId && state.lastSyncedUserId !== userId) {
-                    console.log('Different user detected, clearing old cart before sync')
                     get().clearLocalCart()
                 }
 
                 // Check if this user has been synced before on this browser
                 if (state.lastSyncedUserId === userId && state.hasEverSynced) {
-                    console.log('Returning user detected - loading from server only (no guest cart sync)')
                     await get().loadCart()
                     return
                 }
@@ -82,36 +77,27 @@ export const useCartStore = create<CartStore>()(
                 try {
                     // Only sync guest items for FIRST-TIME sign-in on this browser
                     if (currentItems.length > 0 && !state.hasEverSynced) {
-                        console.log(`First-time sign-in: Syncing ${currentItems.length} guest items`)
-                        const response = await fetch('/api/cart/sync', {
+                        await fetch('/api/cart/sync', {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({ items: currentItems })
                         })
-
-                        if (response.ok) {
-                            console.log('Guest items synced successfully')
-                        }
-                    } else if (state.hasEverSynced) {
-                        console.log('Returning user: Skipping guest cart sync')
                     }
-                    
+
                     // Always load from server
                     await get().loadCart()
-                    
+
                     // Mark as synced for this user
-                    set({ 
+                    set({
                         lastSyncedUserId: userId,
-                        hasEverSynced: true  // Remember we've synced before
+                        hasEverSynced: true
                     })
-                    console.log('Cart sync complete for user:', userId)
-                } catch (error) {
-                    console.error('Failed to sync cart:', error)
+                } catch {
+                    // Failed to sync - cart will be loaded from localStorage
                 }
             },
 
             clearLocalCart: () => {
-                console.log('Clearing local cart (keeping sync history)')
                 set({ 
                     items: [], 
                     lastSyncedUserId: null,
@@ -146,11 +132,8 @@ export const useCartStore = create<CartStore>()(
                         body: JSON.stringify({ productId: item.id })
                     })
 
-                    if (!response.ok && response.status !== 401) {
-                        console.warn('Failed to sync item to server:', response.status)
-                    }
                 } catch {
-                    console.log('Guest mode: Cart saved to localStorage')
+                    // Guest mode: Cart saved to localStorage
                 }
             },
 
@@ -164,7 +147,7 @@ export const useCartStore = create<CartStore>()(
                         method: 'DELETE',
                     })
                 } catch {
-                    console.log('Guest mode: Cart saved to localStorage')
+                    // Guest mode: Cart saved to localStorage
                 }
             },
 
@@ -190,7 +173,7 @@ export const useCartStore = create<CartStore>()(
                         body: JSON.stringify({ quantity })
                     })
                 } catch {
-                    console.log('Guest mode: Cart saved to localStorage')
+                    // Guest mode: Cart saved to localStorage
                 }
             },
 
@@ -201,8 +184,8 @@ export const useCartStore = create<CartStore>()(
                     await fetch('/api/cart', {
                         method: 'DELETE',
                     })
-                } catch (error) {
-                    console.error('Failed to clear cart:', error)
+                } catch {
+                    // Failed to clear cart on server
                 }
             },
 

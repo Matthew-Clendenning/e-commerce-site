@@ -1,13 +1,14 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth'
-import { 
-  validatePrice, 
-  validateStock, 
-  validateProductName, 
+import {
+  validatePrice,
+  validateStock,
+  validateProductName,
   validateDescription,
-  validateId 
+  validateId
 } from '@/lib/validation'
+import { checkRateLimit, getIdentifier } from '@/lib/ratelimit'
 
 // GET - Public endpoint (anyone can view products)
 export async function GET(
@@ -38,10 +39,7 @@ export async function GET(
       ...product,
       price: Number(product.price)
     })
-  } catch (error) {
-    console.error('Error fetching product:', error)
-    
-    // Don't expose internal errors to client
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch product' },
       { status: 500 }
@@ -57,6 +55,13 @@ export async function PATCH(
   try {
     // CRITICAL: Require admin access
     await requireAdmin()
+
+    // Rate limit admin operations
+    const identifier = getIdentifier(request)
+    const { success, response } = await checkRateLimit(identifier, 'admin')
+    if (!success && response) {
+      return response
+    }
 
     const { id } = await params
     const validId = validateId(id)
@@ -113,9 +118,6 @@ export async function PATCH(
       price: Number(product.price)
     })
   } catch (error) {
-    console.error('Error updating product:', error)
-
-    // Handle specific error types
     if (error instanceof Error) {
       if (error.message === 'Unauthorized') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -124,7 +126,6 @@ export async function PATCH(
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
       if (error.message.includes('must be') || error.message.includes('cannot')) {
-        // Validation error
         return NextResponse.json({ error: error.message }, { status: 400 })
       }
     }
@@ -138,21 +139,32 @@ export async function PATCH(
 
 // DELETE - Admin only
 export async function DELETE(
-  _request: NextRequest,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // CRITICAL: Require admin access
     await requireAdmin()
 
+    // Rate limit admin operations
+    const identifier = getIdentifier(request)
+    const { success, response } = await checkRateLimit(identifier, 'admin')
+    if (!success && response) {
+      return response
+    }
+
     const { id } = await params
     const validId = validateId(id)
-    
+
     // Check if product exists
     const existingProduct = await prisma.product.findUnique({
-      where: { id: validId }
+      where: { id: validId },
+      include: {
+        orderItems: true,
+        cartItems: true
+      }
     })
-    
+
     if (!existingProduct) {
       return NextResponse.json(
         { error: 'Product not found' },
@@ -160,17 +172,33 @@ export async function DELETE(
       )
     }
 
-    await prisma.product.delete({
-      where: { id: validId }
-    })
+    // Check if product is part of any orders (preserve order history)
+    if (existingProduct.orderItems.length > 0) {
+      return NextResponse.json(
+        {
+          error: `Cannot delete product: It is part of ${existingProduct.orderItems.length} order(s). Consider setting stock to 0 instead.`
+        },
+        { status: 400 }
+      )
+    }
+
+    // Use a transaction to delete cart items first, then the product
+    await prisma.$transaction([
+      // Delete any cart items referencing this product
+      prisma.cartItem.deleteMany({
+        where: { productId: validId }
+      }),
+      // Then delete the product
+      prisma.product.delete({
+        where: { id: validId }
+      })
+    ])
 
     return NextResponse.json({
       success: true,
       message: 'Product deleted successfully'
     })
   } catch (error) {
-    console.error('Error deleting product:', error)
-
     if (error instanceof Error) {
       if (error.message === 'Unauthorized') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

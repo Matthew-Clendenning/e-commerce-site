@@ -45,3 +45,7 @@ yarn-error.log*
 next-env.d.ts
 
 /src/generated/prisma
+
+tmpclaude-*
+resume_bullets.*
+security_audit_report.*

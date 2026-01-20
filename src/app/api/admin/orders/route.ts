@@ -1,11 +1,19 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/auth'
+import { checkRateLimit, getIdentifier } from '@/lib/ratelimit'
 
 // GET - Fetch all orders (admin only)
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await requireAdmin()
+
+    // Rate limit admin operations
+    const identifier = getIdentifier(request)
+    const { success, response } = await checkRateLimit(identifier, 'admin')
+    if (!success && response) {
+      return response
+    }
 
     const orders = await prisma.order.findMany({
       include: {
@@ -59,7 +67,6 @@ export async function GET() {
       }
     }
 
-    console.error('Error fetching orders:', error)
     return NextResponse.json(
       { error: 'Failed to fetch orders' },
       { status: 500 }

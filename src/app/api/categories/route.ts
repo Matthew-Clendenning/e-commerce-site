@@ -1,10 +1,11 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth'
-import { 
-  validateCategoryName, 
-  validateCategoryDescription 
+import {
+  validateCategoryName,
+  validateCategoryDescription
 } from '@/lib/validation'
+import { checkRateLimit, getIdentifier } from '@/lib/ratelimit'
 
 // GET - Public endpoint (anyone can view categories)
 export async function GET() {
@@ -21,10 +22,7 @@ export async function GET() {
     })
 
     return NextResponse.json(categories)
-  } catch (error) {
-    console.error('Error fetching categories:', error)
-    
-    // Don't expose internal errors
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch categories' },
       { status: 500 }
@@ -37,6 +35,13 @@ export async function POST(request: NextRequest) {
   try {
     // CRITICAL: Require admin access
     await requireAdmin()
+
+    // Rate limit admin operations
+    const identifier = getIdentifier(request)
+    const { success, response } = await checkRateLimit(identifier, 'admin')
+    if (!success && response) {
+      return response
+    }
 
     const body = await request.json()
 
@@ -93,9 +98,6 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(category)
   } catch (error) {
-    console.error('Error creating category:', error)
-
-    // Handle specific error types
     if (error instanceof Error) {
       if (error.message === 'Unauthorized') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -104,12 +106,10 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
       }
       if (error.message.includes('must be') || error.message.includes('cannot')) {
-        // Validation error - safe to expose
         return NextResponse.json({ error: error.message }, { status: 400 })
       }
     }
 
-    // Generic error - don't expose details
     return NextResponse.json(
       { error: 'Failed to create category' },
       { status: 500 }

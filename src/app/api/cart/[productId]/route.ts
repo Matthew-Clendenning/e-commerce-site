@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { auth } from '@clerk/nextjs/server';
 import { NextRequest, NextResponse } from 'next/server';
 import { validateProductId, validateQuantity } from '@/lib/validation';
+import { checkRateLimit, getIdentifier } from '@/lib/ratelimit';
 
 type Props = {
     params: Promise<{ productId: string }>
@@ -14,6 +15,13 @@ export async function PATCH(request: NextRequest, { params }: Props) {
 
         if (!userId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        // Rate limit cart operations
+        const identifier = getIdentifier(request, userId)
+        const { success, response } = await checkRateLimit(identifier, 'cart')
+        if (!success && response) {
+            return response
         }
 
         const { productId } = await params;
@@ -111,10 +119,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
             slug: updated.product.slug,
             stock: updated.product.stock
         });
-    } catch (error) {
-        console.error('Error updating cart item:', error);
-        
-        // Don't expose internal error details
+    } catch {
         return NextResponse.json(
             { error: "Failed to update cart item" },
             { status: 500 }
@@ -129,6 +134,13 @@ export async function DELETE(request: NextRequest, { params }: Props) {
 
         if (!userId) {
             return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+        }
+
+        // Rate limit cart operations
+        const identifier = getIdentifier(request, userId)
+        const { success, response } = await checkRateLimit(identifier, 'cart')
+        if (!success && response) {
+            return response
         }
 
         const { productId } = await params;
@@ -168,9 +180,7 @@ export async function DELETE(request: NextRequest, { params }: Props) {
             // Other error - re-throw
             throw error;
         }
-    } catch (error) {
-        console.error('Error removing cart item:', error);
-        
+    } catch {
         return NextResponse.json(
             { error: "Failed to remove cart item" },
             { status: 500 }

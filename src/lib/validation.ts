@@ -1,3 +1,13 @@
+import DOMPurify from 'isomorphic-dompurify'
+
+// Configure DOMPurify to strip all HTML tags (text only)
+const sanitizeText = (text: string): string => {
+  return DOMPurify.sanitize(text, {
+    ALLOWED_TAGS: [], // No HTML tags allowed
+    ALLOWED_ATTR: [], // No attributes allowed
+  })
+}
+
 // Validate quantity for cart operations
 export function validateQuantity(
   quantity: unknown, 
@@ -104,8 +114,8 @@ export function validateProductName(name: unknown): string {
         throw new Error('Name cannot exceed 200 characters')
     }
 
-    // Remove potentially dangerous characters
-    const sanitized = trimmed.replace(/[<>]/g, '')
+    // Sanitize using DOMPurify to remove XSS vectors
+    const sanitized = sanitizeText(trimmed)
 
     return sanitized
 }
@@ -125,10 +135,10 @@ export function validateDescription(description: unknown): string | null {
   if (trimmed.length > 5000) {
     throw new Error('Description cannot exceed 5000 characters')
   }
-  
-  // Remove potentially dangerous characters
-  const sanitized = trimmed.replace(/[<>]/g, '')
-  
+
+  // Sanitize using DOMPurify to remove XSS vectors
+  const sanitized = sanitizeText(trimmed)
+
   return sanitized
 }
 
@@ -170,8 +180,8 @@ export function validateCategoryName(name: unknown): string {
     throw new Error('Category name cannot exceed 100 characters')
   }
 
-  // Remove potentially dangerous characters
-  const sanitized = trimmed.replace(/[<>]/g, '')
+  // Sanitize using DOMPurify to remove XSS vectors
+  const sanitized = sanitizeText(trimmed)
 
   return sanitized
 }
@@ -191,10 +201,10 @@ export function validateCategoryDescription(description: unknown): string | null
   if (trimmed.length > 1000) {
     throw new Error('Category description cannot exceed 1000 characters')
   }
-  
-  // Remove potentially dangerous characters
-  const sanitized = trimmed.replace(/[<>]/g, '')
-  
+
+  // Sanitize using DOMPurify to remove XSS vectors
+  const sanitized = sanitizeText(trimmed)
+
   return sanitized
 }
 

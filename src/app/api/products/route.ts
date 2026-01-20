@@ -9,6 +9,7 @@ import {
   validateDescription,
   validateId
 } from '@/lib/validation'
+import { checkRateLimit, getIdentifier } from '@/lib/ratelimit'
 
 type ProductWithCategory = Product & {
   category: Category
@@ -40,8 +41,7 @@ export async function GET(request: NextRequest) {
     }))
 
     return NextResponse.json(productsWithNumberPrice)
-  } catch (error) {
-    console.error('Error fetching products:', error)
+  } catch {
     return NextResponse.json(
       { error: 'Failed to fetch products' },
       { status: 500 }
@@ -54,6 +54,13 @@ export async function POST(request: NextRequest) {
   try {
     // CRITICAL: Require admin access
     await requireAdmin()
+
+    // Rate limit admin operations
+    const identifier = getIdentifier(request)
+    const { success, response } = await checkRateLimit(identifier, 'admin')
+    if (!success && response) {
+      return response
+    }
 
     const body = await request.json()
 
@@ -123,8 +130,6 @@ export async function POST(request: NextRequest) {
       price: Number(product.price)
     })
   } catch (error) {
-    console.error('Error creating product:', error)
-
     if (error instanceof Error) {
       if (error.message === 'Unauthorized') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

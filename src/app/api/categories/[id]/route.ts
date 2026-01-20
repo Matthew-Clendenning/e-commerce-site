@@ -1,11 +1,12 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth'
-import { 
-  validateCategoryName, 
+import {
+  validateCategoryName,
   validateCategoryDescription,
-  validateId 
+  validateId
 } from '@/lib/validation'
+import { checkRateLimit, getIdentifier } from '@/lib/ratelimit'
 
 // GET - Public endpoint
 export async function GET(
@@ -34,12 +35,10 @@ export async function GET(
 
     return NextResponse.json(category)
   } catch (error) {
-    console.error('Error fetching category:', error)
-    
     if (error instanceof Error && error.message.includes('Invalid ID')) {
       return NextResponse.json({ error: error.message }, { status: 400 })
     }
-    
+
     return NextResponse.json(
       { error: 'Failed to fetch category' },
       { status: 500 }
@@ -55,6 +54,13 @@ export async function PATCH(
   try {
     // CRITICAL: Require admin access
     await requireAdmin()
+
+    // Rate limit admin operations
+    const identifier = getIdentifier(request)
+    const { success, response } = await checkRateLimit(identifier, 'admin')
+    if (!success && response) {
+      return response
+    }
 
     const { id } = await params
     const validId = validateId(id)
@@ -123,8 +129,6 @@ export async function PATCH(
 
     return NextResponse.json(category)
   } catch (error) {
-    console.error('Error updating category:', error)
-
     if (error instanceof Error) {
       if (error.message === 'Unauthorized') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
@@ -152,6 +156,13 @@ export async function DELETE(
   try {
     // CRITICAL: Require admin access
     await requireAdmin()
+
+    // Rate limit admin operations
+    const identifier = getIdentifier(request)
+    const { success, response } = await checkRateLimit(identifier, 'admin')
+    if (!success && response) {
+      return response
+    }
 
     const { id } = await params
     const validId = validateId(id)
@@ -192,8 +203,6 @@ export async function DELETE(
       message: 'Category deleted successfully'
     })
   } catch (error) {
-    console.error('Error deleting category:', error)
-
     if (error instanceof Error) {
       if (error.message === 'Unauthorized') {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })

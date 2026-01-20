@@ -29,8 +29,7 @@ export async function POST(request: Request) {
       signature,
       process.env.STRIPE_WEBHOOK_SECRET!
     )
-  } catch (err) {
-    console.error('Webhook signature verification failed:', err)
+  } catch {
     return NextResponse.json(
       { error: 'Invalid signature' },
       { status: 400 }
@@ -47,7 +46,6 @@ export async function POST(request: Request) {
         const userId = session.metadata?.userId;
 
         if (!orderId || !userId) {
-          console.error('Missing orderId or userId in session metadata');
           return NextResponse.json({ error: 'Missing metadata' }, { status: 400 });
         }
 
@@ -68,7 +66,6 @@ export async function POST(request: Request) {
         })
 
         if (!order) {
-          console.error('Order not found:', orderId)
           return NextResponse.json(
             { error: 'Order not found' },
             { status: 404 }
@@ -94,7 +91,6 @@ export async function POST(request: Request) {
           where: { userId }
         })
 
-        console.log('✅ Order completed:', orderId)
         break
       }
 
@@ -141,12 +137,12 @@ export async function POST(request: Request) {
       }
 
       default:
-        console.log(`Unhandled event type: ${event.type}`)
+        // Unhandled event type - ignored
+        break
     }
 
     return NextResponse.json({ received: true })
-  } catch (error) {
-    console.error('Webhook handler error:', error)
+  } catch {
     return NextResponse.json(
       { error: 'Webhook handler failed' },
       { status: 500 }

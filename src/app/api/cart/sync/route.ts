@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma'
 import { auth, currentUser } from '@clerk/nextjs/server'
 import { NextResponse } from 'next/server'
 import { validateProductId, validateQuantity } from '@/lib/validation'
+import { checkRateLimit, getIdentifier } from '@/lib/ratelimit'
 
 // Maximum items that can be synced at once
 const MAX_SYNC_ITEMS = 50
@@ -23,6 +24,13 @@ export async function POST(request: Request) {
         { error: 'Must be authenticated to sync cart' },
         { status: 401 }
       )
+    }
+
+    // Rate limit cart sync operations
+    const identifier = getIdentifier(request, userId)
+    const { success, response } = await checkRateLimit(identifier, 'cart')
+    if (!success && response) {
+      return response
     }
 
     // Get user info from Clerk
@@ -237,16 +245,15 @@ export async function POST(request: Request) {
     })
 
     // STEP 6: Return detailed result
-    const response: SyncResult = {
+    const syncResult: SyncResult = {
       success: true,
       synced: result,
       skipped: errors.length,
       errors: errors.length > 0 ? errors : []
     }
 
-    return NextResponse.json(response)
-  } catch (error) {
-    console.error('Error syncing cart:', error)
+    return NextResponse.json(syncResult)
+  } catch {
     return NextResponse.json(
       { error: 'Failed to sync cart' },
       { status: 500 }

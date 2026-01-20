@@ -45,7 +45,7 @@ try {
     prisma = globalForPrisma.prisma
   }
 } catch (error) {
-  console.error('Failed to initialize Prisma Client:', error)
+  // Re-throw to prevent silent failures
   throw error
 }
 

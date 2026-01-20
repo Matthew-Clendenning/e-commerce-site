@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import { toast } from 'sonner'
 import styles from '../../styles/admin.module.css'
+import ConfirmModal from '../../components/ConfirmModal'
 
 type Order = {
   id: string
@@ -90,6 +91,11 @@ export default function AdminPage() {
     name: '',
     description: ''
   })
+  const [deleteConfirm, setDeleteConfirm] = useState<{
+    isOpen: boolean
+    productId: string
+    productName: string
+  }>({ isOpen: false, productId: '', productName: '' })
 
   // Check admin access
   useEffect(() => {
@@ -99,7 +105,7 @@ export default function AdminPage() {
       const isAdmin = user.publicMetadata?.role === 'admin'
       
       if (!isAdmin) {
-        alert('Access denied: Admin privileges required')
+        toast.error('Access denied: Admin privileges required')
         router.push('/')
       }
     }
@@ -151,10 +157,10 @@ export default function AdminPage() {
       await fetchOrders()
       setSelectedOrder(null)
       setShowOrderModal(false)
-      alert('Order status updated successfully!')
+      toast.success('Order status updated successfully!')
     } catch (error) {
-      console.error('Error updating order:', error)
-      alert(`Failed to update order: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      // Error updating order
+      toast.error(`Failed to update order: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setSaving(false)
     }
@@ -166,7 +172,7 @@ export default function AdminPage() {
       const data = await response.json()
       setOrders(data)
     } catch (error) {
-      console.error('Error fetching orders:', error)
+      // Error fetching orders
     }
   }
 
@@ -177,8 +183,8 @@ export default function AdminPage() {
       const data = await response.json()
       setProducts(data)
     } catch (error) {
-      console.error('Error fetching products:', error)
-      alert('Failed to fetch products')
+      // Error fetching products
+      toast.error('Failed to fetch products')
     } finally {
       setLoading(false)
     }
@@ -190,7 +196,7 @@ export default function AdminPage() {
       const data = await response.json()
       setCategories(data)
     } catch (error) {
-      console.error('Error fetching categories:', error)
+      // Error fetching categories
     }
   }
 
@@ -234,22 +240,26 @@ export default function AdminPage() {
       setEditForm({ name: '', price: '', stock: '', description: '' })
       toast.success('Product updated successfully!')
     } catch (error) {
-      console.error('Error updating product:', error)
-      alert(`Failed to update product: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      // Error updating product
+      toast.error(`Failed to update product: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setSaving(false)
     }
   }
 
-  const deleteProduct = async (productId: string, productName: string) => {
-    // Confirmation dialog
-    const confirmed = window.confirm(
-      `Are you sure you want to delete "${productName}"?\n\nThis action cannot be undone.`
-    )
+  // Open delete confirmation modal
+  const openDeleteConfirm = (productId: string, productName: string) => {
+    setDeleteConfirm({ isOpen: true, productId, productName })
+  }
 
-    if (!confirmed) {
-      return
-    }
+  // Close delete confirmation modal
+  const closeDeleteConfirm = () => {
+    setDeleteConfirm({ isOpen: false, productId: '', productName: '' })
+  }
+
+  // Execute the delete after confirmation
+  const confirmDelete = async () => {
+    const { productId } = deleteConfirm
 
     setSaving(true)
     try {
@@ -263,11 +273,12 @@ export default function AdminPage() {
         throw new Error(data.error || 'Failed to delete product')
       }
 
+      closeDeleteConfirm()
       await fetchProducts()
-      alert('Product deleted successfully!')
+      toast.success('Product deleted successfully!')
     } catch (error) {
-      console.error('Error deleting product:', error)
-      alert(`Failed to delete product: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      // Error deleting product
+      toast.error(`Failed to delete product: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setSaving(false)
     }
@@ -275,7 +286,7 @@ export default function AdminPage() {
 
   const createProduct = async () => {
     if (!createForm.name || !createForm.price || !createForm.categoryId) {
-      alert('Please fill in all required fields (Name, Price, Category)')
+      toast.warning('Please fill in all required fields (Name, Price, Category)')
       return
     }
 
@@ -310,10 +321,10 @@ export default function AdminPage() {
         categoryId: '',
         imageUrl: ''
       })
-      alert('Product created successfully!')
+      toast.success('Product created successfully!')
     } catch (error) {
-      console.error('Error creating product:', error)
-      alert(`Failed to create product: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      // Error creating product
+      toast.error(`Failed to create product: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setSaving(false)
     }
@@ -321,7 +332,7 @@ export default function AdminPage() {
 
   const createCategory = async () => {
     if (!createCategoryForm.name) {
-      alert('Please enter a category name')
+      toast.warning('Please enter a category name')
       return
     }
 
@@ -345,10 +356,10 @@ export default function AdminPage() {
       await fetchCategories()
       setShowCreateCategoryForm(false)
       setCreateCategoryForm({ name: '', description: '' })
-      alert('Category created successfully!')
+      toast.success('Category created successfully!')
     } catch (error) {
-      console.error('Error creating category:', error)
-      alert(`Failed to create category: ${error instanceof Error ? error.message : 'Unknown error'}`)
+      // Error creating category
+      toast.error(`Failed to create category: ${error instanceof Error ? error.message : 'Unknown error'}`)
     } finally {
       setSaving(false)
     }
@@ -633,7 +644,7 @@ export default function AdminPage() {
                             Cancel
                           </button>
                           <button
-                            onClick={() => deleteProduct(product.id, product.name)}
+                            onClick={() => openDeleteConfirm(product.id, product.name)}
                             className={styles.deleteButton}
                             disabled={saving}
                           >
@@ -950,6 +961,19 @@ export default function AdminPage() {
           )}
         </>
       )}
+
+      {/* Delete Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteConfirm.isOpen}
+        title="Delete Product"
+        message={`Are you sure you want to delete "${deleteConfirm.productName}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={confirmDelete}
+        onCancel={closeDeleteConfirm}
+        isLoading={saving}
+      />
     </div>
   )
 }

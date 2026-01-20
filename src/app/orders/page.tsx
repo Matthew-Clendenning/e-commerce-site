@@ -49,8 +49,8 @@ export default function OrdersPage() {
       const response = await fetch('/api/orders')
       const data = await response.json()
       setOrders(data)
-    } catch (error) {
-      console.error('Error fetching orders:', error)
+    } catch {
+      // Error fetching orders
     } finally {
       setLoading(false)
     }

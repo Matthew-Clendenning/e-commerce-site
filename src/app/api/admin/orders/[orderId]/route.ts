@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/auth'
+import { validateId } from '@/lib/validation'
+import { checkRateLimit, getIdentifier } from '@/lib/ratelimit'
 
 type Props = {
     params: Promise<{ orderId: string }>
@@ -11,7 +13,18 @@ export async function PATCH(request: NextRequest, { params }: Props) {
     try {
         await requireAdmin()
 
+        // Rate limit admin operations
+        const identifier = getIdentifier(request)
+        const { success, response } = await checkRateLimit(identifier, 'admin')
+        if (!success && response) {
+            return response
+        }
+
         const { orderId } = await params
+
+        // Validate orderId format
+        const validOrderId = validateId(orderId)
+
         const body = await request.json()
         const { status } = body
 
@@ -26,7 +39,7 @@ export async function PATCH(request: NextRequest, { params }: Props) {
 
         // Update order
         const updatedOrder = await prisma.order.update({
-            where: { id: orderId },
+            where: { id: validOrderId },
             data: { status },
             include: {
                 items: true,
@@ -57,7 +70,6 @@ export async function PATCH(request: NextRequest, { params }: Props) {
             }
         }
 
-        console.error('Error updating order:', error)
         return NextResponse.json(
             { error: 'Failed to update order' },
             { status: 500 }
@@ -66,14 +78,24 @@ export async function PATCH(request: NextRequest, { params }: Props) {
 }
 
 // Get single order details
-export async function GET(_request: NextRequest, { params }: Props) {
+export async function GET(request: NextRequest, { params }: Props) {
     try {
         await requireAdmin()
 
+        // Rate limit admin operations
+        const identifier = getIdentifier(request)
+        const { success, response } = await checkRateLimit(identifier, 'admin')
+        if (!success && response) {
+            return response
+        }
+
         const { orderId } = await params
-        
+
+        // Validate orderId format
+        const validOrderId = validateId(orderId)
+
         const order = await prisma.order.findUnique({
-            where: { id: orderId },
+            where: { id: validOrderId },
             include: {
                 user: {
                     select: {
@@ -126,7 +148,6 @@ export async function GET(_request: NextRequest, { params }: Props) {
             }
         }
 
-        console.error('Error fetching order:', error)
         return NextResponse.json(
             { error: 'Failed to fetch order' },
             { status: 500 }
