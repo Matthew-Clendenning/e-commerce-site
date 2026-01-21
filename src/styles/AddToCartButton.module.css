@@ -1,24 +1,27 @@
 .addToCart {
     width: 100%;
     padding: 16px 32px;
-    background: var(--color-primary);
-    color: white;
+    background: var(--color-gold);
+    color: var(--color-charcoal);
     border: none;
-    border-radius: 8px;
-    font-size: 18px;
+    border-radius: 0;
+    font-size: 14px;
     font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
     cursor: pointer;
     transition: all 0.2s ease;
 }
 
 .addToCart:hover:not(:disabled) {
-    background: #0056b3;
+    background: var(--color-gold-dark);
     transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3) 
+    box-shadow: 0 4px 12px rgba(201, 169, 98, 0.3);
 }
 
 .addToCart:disabled {
-    background: #9ca3af;
+    background: var(--color-border-dark);
+    color: var(--color-charcoal-light);
     cursor: not-allowed;
     transform: none;
 }

@@ -1,10 +1,25 @@
 import { ClerkProvider } from '@clerk/nextjs'
+import { Cormorant_Garamond, Inter } from 'next/font/google'
 import './globals.css'
 import type { Metadata } from 'next'
 import Navigation from '@/components/Navigation'
 import CartSidebar from '@/components/CartSidebar'
 import CartSyncHandler from '@/components/CartSyncHandler'
 import { Toaster } from 'sonner'
+
+const cormorantGaramond = Cormorant_Garamond({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-heading',
+  display: 'swap',
+})
+
+const inter = Inter({
+  subsets: ['latin'],
+  weight: ['400', '500', '600', '700'],
+  variable: '--font-body',
+  display: 'swap',
+})
 
 export const metadata: Metadata = {
   metadataBase: new URL("https://e-commerce-site-eight-blush.vercel.app"),
@@ -66,7 +81,7 @@ export default function RootLayout({
       afterSignOutUrl="/"
     >
       <html lang="en">
-        <body>
+        <body className={`${cormorantGaramond.variable} ${inter.variable}`}>
           <Navigation />
           <CartSyncHandler />
           {children}

@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { UserButton, SignInButton, SignedIn, SignedOut, useUser } from '@clerk/nextjs'
 import CartButton from './CartButton'
 import styles from '../styles/Navigation.module.css'
+import { UserRound } from 'lucide-react'
 
 export default function Navigation() {
   const { user } = useUser()
@@ -14,8 +15,8 @@ export default function Navigation() {
   return (
     <nav className={styles.nav}>
       <div className={styles.container}>
-        <Link href="/" className={styles.logo}>
-          E-Commerce Store
+        <Link href="/" className={styles.logo} title='LuxeMarket'>
+          LuxeMarket
         </Link>
         
         <div className={styles.links}>
@@ -41,9 +42,7 @@ export default function Navigation() {
           
           <SignedOut>
             <SignInButton mode="modal">
-              <button className={styles.signInButton}>
-                Sign In
-              </button>
+              <button className={styles.signInButton}><UserRound size={24} /></button>
             </SignInButton>
           </SignedOut>
           <SignedIn>

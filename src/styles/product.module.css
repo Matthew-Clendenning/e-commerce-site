@@ -8,26 +8,27 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 14px;
-  color: #6b7280;
-  margin-bottom: 32px;
+  font-size: 13px;
+  color: var(--color-charcoal-light);
+  margin-bottom: 40px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .breadcrumb a {
-  color: var(--color-primary);
+  color: var(--color-gold);
   text-decoration: none;
   transition: color 0.2s;
 }
 
 .breadcrumb a:hover {
-  color: #0056b3;
-  text-decoration: underline;
+  color: var(--color-gold-dark);
 }
 
 .productGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 64px;
+  gap: 80px;
   margin-top: 32px;
 }
 
@@ -38,21 +39,22 @@
 .image {
   width: 100%;
   height: auto;
-  border-radius: 12px;
-  border: 1px solid #e5e7eb;
+  border-radius: 0;
+  border: 1px solid var(--color-border);
   object-fit: cover;
 }
 
 .noImage {
   width: 100%;
   aspect-ratio: 1;
-  background: #f3f4f6;
-  border-radius: 12px;
+  background: var(--color-cream);
+  border-radius: 0;
+  border: 1px solid var(--color-border);
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #9ca3af;
-  font-size: 18px;
+  color: var(--color-charcoal-light);
+  font-size: 16px;
 }
 
 .detailsSection {
@@ -62,29 +64,34 @@
 }
 
 .category {
-  font-size: 14px;
-  color: var(--color-primary);
+  font-size: 12px;
+  color: var(--color-gold);
   font-weight: 600;
   text-transform: uppercase;
-  letter-spacing: 0.5px;
+  letter-spacing: 2px;
 }
 
 .title {
-  font-size: 36px;
-  font-weight: 700;
-  color: #111827;
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: 42px;
+  font-weight: 400;
+  color: var(--color-charcoal);
   margin: 0;
   line-height: 1.2;
+  letter-spacing: 1px;
 }
 
 .price {
-  font-size: 32px;
-  font-weight: 700;
-  color: #111827;
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: 36px;
+  font-weight: 500;
+  color: var(--color-charcoal);
 }
 
 .stock {
-  font-size: 16px;
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .inStock {
@@ -98,55 +105,63 @@
 }
 
 .description h2 {
+  font-family: var(--font-heading), Georgia, serif;
   font-size: 20px;
-  font-weight: 600;
-  color: #111827;
+  font-weight: 500;
+  color: var(--color-charcoal);
   margin: 0 0 12px 0;
+  letter-spacing: 1px;
 }
 
 .description p {
   font-size: 16px;
-  color: #6b7280;
-  line-height: 1.6;
+  color: var(--color-charcoal-light);
+  line-height: 1.8;
   margin: 0;
 }
 
 .addToCart {
-  padding: 16px 32px;
-  background: var(--color-primary);
-  color: white;
+  padding: 18px 32px;
+  background: var(--color-gold);
+  color: var(--color-charcoal);
   border: none;
-  border-radius: 8px;
-  font-size: 18px;
+  border-radius: 0;
+  font-size: 14px;
   font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
   cursor: pointer;
   transition: all 0.2s ease;
   margin-top: 16px;
 }
 
 .addToCart:hover:not(:disabled) {
-  background: #0056b3;
+  background: var(--color-gold-dark);
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  box-shadow: 0 4px 12px rgba(201, 169, 98, 0.3);
 }
 
 .addToCart:disabled {
-  background: #9ca3af;
+  background: var(--color-border-dark);
+  color: var(--color-charcoal-light);
   cursor: not-allowed;
 }
 
 .features {
-  background: #f9fafb;
-  padding: 24px;
-  border-radius: 8px;
-  margin-top: 16px;
+  background: var(--color-cream);
+  padding: 28px;
+  border-radius: 0;
+  border: 1px solid var(--color-border);
+  margin-top: 24px;
 }
 
 .features h3 {
+  font-family: var(--font-heading), Georgia, serif;
   font-size: 18px;
-  font-weight: 600;
-  color: #111827;
+  font-weight: 500;
+  color: var(--color-charcoal);
   margin: 0 0 16px 0;
+  letter-spacing: 1px;
 }
 
 .features ul {
@@ -156,31 +171,36 @@
 }
 
 .features li {
-  padding: 8px 0;
-  color: #6b7280;
+  padding: 10px 0;
+  color: var(--color-charcoal-light);
   font-size: 15px;
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 12px;
+  border-bottom: 1px solid var(--color-border);
+}
+
+.features li:last-child {
+  border-bottom: none;
 }
 
 .features li::before {
   content: '✓';
-  color: var(--color-success);
+  color: var(--color-gold);
   font-weight: bold;
 }
 
 @media (max-width: 768px) {
   .productGrid {
     grid-template-columns: 1fr;
-    gap: 32px;
+    gap: 40px;
   }
 
   .title {
-    font-size: 28px;
+    font-size: 32px;
   }
 
   .price {
-    font-size: 24px;
+    font-size: 28px;
   }
 }

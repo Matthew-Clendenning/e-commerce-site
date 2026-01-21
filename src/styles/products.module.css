@@ -1,50 +1,54 @@
 .container {
   max-width: 1400px;
   margin: 0 auto;
-  padding: 40px 20px;
+  padding: 60px 20px;
 }
 
 .header {
   text-align: center;
-  margin-bottom: 48px;
+  margin-bottom: 60px;
 }
 
 .header h1 {
+  font-family: var(--font-heading), Georgia, serif;
   font-size: 48px;
-  font-weight: 700;
-  margin: 0 0 12px 0;
-  color: #111827;
+  font-weight: 400;
+  margin: 0 0 16px 0;
+  color: var(--color-charcoal);
+  letter-spacing: 2px;
 }
 
 .header p {
   font-size: 18px;
-  color: #6b7280;
+  color: var(--color-charcoal-light);
   margin: 0;
 }
 
 .count {
   text-align: center;
-  color: #6b7280;
+  color: var(--color-charcoal-light);
   font-size: 14px;
-  margin-bottom: 24px;
+  margin-bottom: 32px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
   gap: 32px;
 }
 
 .empty {
   text-align: center;
-  padding: 80px 20px;
+  padding: 100px 20px;
   font-size: 18px;
-  color: #6b7280;
+  color: var(--color-charcoal-light);
 }
 
 @media (max-width: 768px) {
   .header h1 {
-    font-size: 32px;
+    font-size: 36px;
   }
 
   .header p {
@@ -52,7 +56,7 @@
   }
 
   .grid {
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
-    gap: 20px;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
   }
 }

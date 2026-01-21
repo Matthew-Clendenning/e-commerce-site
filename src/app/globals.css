@@ -5,10 +5,29 @@
 }
 
 :root {
-  --color-primary: #007bff;
-  --color-secondary: #6c757d;
-  --color-success: #28a745;
-  --color-danger: #dc3545;
+  /* 60-30-10 Luxury Color Palette */
+  /* 60% - Dominant (backgrounds) */
+  --color-cream: #F7F3EE;
+  --color-cream-light: #FDFCFA;
+
+  /* 30% - Secondary (text, navigation) */
+  --color-charcoal: #1A1A1A;
+  --color-charcoal-light: #4A4A4A;
+
+  /* 10% - Accent (CTAs, highlights) */
+  --color-gold: #C9A962;
+  --color-gold-dark: #B8944F;
+
+  /* Supporting colors */
+  --color-border: #E8E4DE;
+  --color-border-dark: #D4CFC7;
+
+  /* Legacy mappings for compatibility */
+  --color-primary: var(--color-gold);
+  --color-secondary: var(--color-charcoal-light);
+  --color-success: #2D5A3D;
+  --color-danger: #8B3A3A;
+
   --spacing-xs: 4px;
   --spacing-sm: 8px;
   --spacing-md: 16px;
@@ -17,7 +36,12 @@
 }
 
 body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+  font-family: var(--font-body), -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   line-height: 1.6;
-  color: #333;
+  color: var(--color-charcoal);
+  background-color: var(--color-cream);
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-heading), Georgia, 'Times New Roman', serif;
 }
