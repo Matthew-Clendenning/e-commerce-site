@@ -6,6 +6,7 @@ import Navigation from '@/components/Navigation'
 import CartSidebar from '@/components/CartSidebar'
 import CartSyncHandler from '@/components/CartSyncHandler'
 import { Toaster } from 'sonner'
+import { SpeedInsights } from "@vercel/speed-insights/next"
 
 const cormorantGaramond = Cormorant_Garamond({
   subsets: ['latin'],
@@ -92,6 +93,7 @@ export default function RootLayout({
             closeButton
             duration={4000}
           />
+          <SpeedInsights />
         </body>
       </html>
     </ClerkProvider>
