@@ -171,7 +171,7 @@ export default function AdminPage() {
       const response = await fetch('/api/admin/orders')
       const data = await response.json()
       setOrders(data)
-    } catch (error) {
+    } catch {
       // Error fetching orders
     }
   }
@@ -182,7 +182,7 @@ export default function AdminPage() {
       const response = await fetch('/api/products')
       const data = await response.json()
       setProducts(data)
-    } catch (error) {
+    } catch {
       // Error fetching products
       toast.error('Failed to fetch products')
     } finally {
@@ -195,7 +195,7 @@ export default function AdminPage() {
       const response = await fetch('/api/categories')
       const data = await response.json()
       setCategories(data)
-    } catch (error) {
+    } catch {
       // Error fetching categories
     }
   }

@@ -126,12 +126,11 @@ export const useCartStore = create<CartStore>()(
                 })
 
                 try {
-                    const response = await fetch('/api/cart', {
+                    await fetch('/api/cart', {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({ productId: item.id })
                     })
-
                 } catch {
                     // Guest mode: Cart saved to localStorage
                 }
