@@ -17,6 +17,7 @@ type CartStore = {
     isLoading: boolean;
     lastSyncedUserId: string | null;
     hasEverSynced: boolean;
+    hasHydrated: boolean;
 
     addItem: (item: Omit<CartItem, 'quantity'>) => Promise<void>;
     removeItem: (productId: string) => Promise<void>;
@@ -26,6 +27,7 @@ type CartStore = {
     syncCartToServer: (userId: string) => Promise<void>;
     clearLocalCart: () => void;
     toggleCart: () => void;
+    setHasHydrated: (state: boolean) => void;
 
     totalItems: () => number;
     totalPrice: () => number;
@@ -38,7 +40,12 @@ export const useCartStore = create<CartStore>()(
             isOpen: false,
             isLoading: false,
             lastSyncedUserId: null,
-            hasEverSynced: false,  // NEW
+            hasEverSynced: false,
+            hasHydrated: false,
+
+            setHasHydrated: (state: boolean) => {
+                set({ hasHydrated: state })
+            },
 
             loadCart: async () => {
                 set({ isLoading: true })
@@ -200,13 +207,16 @@ export const useCartStore = create<CartStore>()(
                 return state.items.reduce((total, item) => total + (item.price * item.quantity), 0)
             },
         }),
-        { 
+        {
             name: 'cart-storage',
-            partialize: (state) => ({ 
+            partialize: (state) => ({
                 items: state.items,
                 lastSyncedUserId: state.lastSyncedUserId,
-                hasEverSynced: state.hasEverSynced  // Persist this flag
-            })
+                hasEverSynced: state.hasEverSynced
+            }),
+            onRehydrateStorage: () => (state) => {
+                state?.setHasHydrated(true)
+            }
         }
     )
 )

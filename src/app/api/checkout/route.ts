@@ -3,17 +3,23 @@ import { auth, currentUser } from '@clerk/nextjs/server'
 import { stripe } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit, getIdentifier } from '@/lib/ratelimit'
+import { validateEmail, validateGuestCartItems, validateGuestName } from '@/lib/validation'
+import { Product } from '@prisma/client'
+
+// Type for cart items with product data
+type CartItemWithProduct = {
+  id: string
+  quantity: number
+  createdAt: Date
+  updatedAt: Date
+  userId: string
+  productId: string
+  product: Product
+}
 
 export async function POST(request: Request) {
   try {
     const { userId } = await auth()
-
-    if (!userId) {
-      return NextResponse.json(
-        { error: 'Unauthorized' },
-        { status: 401 }
-      )
-    }
 
     // Rate limit checkout attempts
     const identifier = getIdentifier(request, userId)
@@ -22,21 +28,108 @@ export async function POST(request: Request) {
       return response
     }
 
-    const user = await currentUser()
-    if (!user) {
-      return NextResponse.json(
-        { error: 'User not found' },
-        { status: 404 }
-      )
-    }
+    // Parse request body for guest checkout
+    const body = await request.json().catch(() => ({}))
 
-    // Get user's cart items
-    const cartItems = await prisma.cartItem.findMany({
-      where: { userId },
-      include: {
-        product: true
+    // Determine if this is a guest checkout or authenticated checkout
+    const isGuest = !userId
+
+    let customerEmail: string
+    let customerName: string | null = null
+    let cartItems: CartItemWithProduct[]
+
+    if (isGuest) {
+      // Guest checkout - validate inputs
+      const { email, name, items } = body as {
+        email?: unknown
+        name?: unknown
+        items?: unknown
       }
-    })
+
+      // Validate email
+      if (!validateEmail(email)) {
+        return NextResponse.json(
+          { error: 'Valid email is required for guest checkout' },
+          { status: 400 }
+        )
+      }
+      customerEmail = email
+
+      // Validate name (optional)
+      try {
+        customerName = validateGuestName(name)
+      } catch (err) {
+        return NextResponse.json(
+          { error: err instanceof Error ? err.message : 'Invalid name' },
+          { status: 400 }
+        )
+      }
+
+      // Validate cart items
+      const validatedItems = validateGuestCartItems(items)
+      if (!validatedItems) {
+        return NextResponse.json(
+          { error: 'Invalid cart items' },
+          { status: 400 }
+        )
+      }
+
+      // Fetch products from database (never trust client prices)
+      const productIds = validatedItems.map(item => item.id)
+      const products = await prisma.product.findMany({
+        where: { id: { in: productIds } }
+      })
+
+      // Build cart items from validated data
+      const builtItems: CartItemWithProduct[] = []
+      for (const item of validatedItems) {
+        const product = products.find(p => p.id === item.id)
+        if (!product) {
+          return NextResponse.json(
+            { error: `Product not found: ${item.id}` },
+            { status: 400 }
+          )
+        }
+        builtItems.push({
+          id: `guest-${item.id}`,
+          quantity: item.quantity,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          userId: '',
+          productId: item.id,
+          product
+        })
+      }
+      cartItems = builtItems
+
+      // Check all products exist
+      if (cartItems.length !== validatedItems.length) {
+        return NextResponse.json(
+          { error: 'One or more products not found' },
+          { status: 400 }
+        )
+      }
+    } else {
+      // Authenticated checkout
+      const user = await currentUser()
+      if (!user) {
+        return NextResponse.json(
+          { error: 'User not found' },
+          { status: 404 }
+        )
+      }
+
+      customerEmail = user.emailAddresses[0]?.emailAddress || ''
+      customerName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || null
+
+      // Get user's cart items from database
+      cartItems = await prisma.cartItem.findMany({
+        where: { userId },
+        include: {
+          product: true
+        }
+      })
+    }
 
     if (cartItems.length === 0) {
       return NextResponse.json(
@@ -49,8 +142,8 @@ export async function POST(request: Request) {
     for (const item of cartItems) {
       if (item.product.stock < item.quantity) {
         return NextResponse.json(
-          { 
-            error: `Insufficient stock for ${item.product.name}. Only ${item.product.stock} available.` 
+          {
+            error: `Insufficient stock for ${item.product.name}. Only ${item.product.stock} available.`
           },
           { status: 400 }
         )
@@ -79,9 +172,10 @@ export async function POST(request: Request) {
     // Create pending order in database
     const order = await prisma.order.create({
       data: {
-        userId,
-        customerEmail: user.emailAddresses[0]?.emailAddress || '',
-        customerName: `${user.firstName || ''} ${user.lastName || ''}`.trim() || null,
+        userId: isGuest ? null : userId,
+        isGuest,
+        customerEmail,
+        customerName,
         total,
         status: 'PENDING',
         items: {
@@ -96,22 +190,57 @@ export async function POST(request: Request) {
       }
     })
 
+    // Shipping options: Free shipping over $50, otherwise $5.99 flat rate
+    const FREE_SHIPPING_THRESHOLD = 50
+    const FLAT_RATE_SHIPPING = 599 // $5.99 in cents
+
+    const shippingOptions = total >= FREE_SHIPPING_THRESHOLD
+      ? [
+          {
+            shipping_rate_data: {
+              type: 'fixed_amount' as const,
+              fixed_amount: { amount: 0, currency: 'usd' },
+              display_name: 'Free Shipping',
+              delivery_estimate: {
+                minimum: { unit: 'business_day' as const, value: 5 },
+                maximum: { unit: 'business_day' as const, value: 7 },
+              },
+            },
+          },
+        ]
+      : [
+          {
+            shipping_rate_data: {
+              type: 'fixed_amount' as const,
+              fixed_amount: { amount: FLAT_RATE_SHIPPING, currency: 'usd' },
+              display_name: 'Standard Shipping',
+              delivery_estimate: {
+                minimum: { unit: 'business_day' as const, value: 5 },
+                maximum: { unit: 'business_day' as const, value: 7 },
+              },
+            },
+          },
+        ]
+
     // Create Stripe Checkout Session
     const session = await stripe.checkout.sessions.create({
       payment_method_types: ['card'],
       line_items: lineItems,
       mode: 'payment',
       success_url: `${process.env.NEXT_PUBLIC_APP_URL}/order/success?session_id={CHECKOUT_SESSION_ID}`,
-      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/cart`,
-      customer_email: user.emailAddresses[0]?.emailAddress,
+      cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/checkout`,
+      customer_email: customerEmail,
       metadata: {
         orderId: order.id,
-        userId: userId,
+        userId: userId || '',
+        isGuest: isGuest ? 'true' : 'false',
+        guestToken: order.guestToken || '',
       },
       billing_address_collection: 'required',
       shipping_address_collection: {
-        allowed_countries: ['US', 'CA', 'GB'], // Add countries you ship to
+        allowed_countries: ['US'],
       },
+      shipping_options: shippingOptions,
     })
 
     // Update order with Stripe session ID
@@ -120,12 +249,14 @@ export async function POST(request: Request) {
       data: { stripeSessionId: session.id }
     })
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       sessionId: session.id,
-      url: session.url 
+      url: session.url,
+      guestToken: isGuest ? order.guestToken : undefined,
     })
 
-  } catch {
+  } catch (err) {
+    console.error('Checkout error:', err)
     return NextResponse.json(
       { error: 'Failed to create checkout session' },
       { status: 500 }

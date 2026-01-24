@@ -9,7 +9,17 @@ const isPublicRoute = createRouteMatcher([
   '/categories(.*)',
   '/api/products(.*)',
   '/api/categories(.*)',
-  '/api/cart(.*)'
+  '/api/cart(.*)',
+  // Guest checkout routes
+  '/checkout',
+  '/cart',
+  '/order/success',
+  '/orders',
+  '/orders/lookup',
+  '/api/checkout',
+  '/api/orders(.*)',
+  '/api/guest(.*)',
+  '/api/webhooks(.*)'
 ])
 
 const isAdminRoute = createRouteMatcher([

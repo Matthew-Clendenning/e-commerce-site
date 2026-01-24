@@ -213,15 +213,78 @@ export function validateSlug(slug: unknown): string {
   if (typeof slug !== 'string') {
     throw new Error('Slug must be a string')
   }
-  
+
   if (slug.length === 0 || slug.length > 100) {
     throw new Error('Invalid slug length')
   }
-  
+
   // Slug should only contain lowercase letters, numbers, and hyphens
   if (!/^[a-z0-9-]+$/.test(slug)) {
     throw new Error('Invalid slug format')
   }
-  
+
   return slug
+}
+
+// Validate email format
+export function validateEmail(email: unknown): email is string {
+  if (typeof email !== 'string') return false
+  if (email.length === 0 || email.length > 254) return false
+
+  // Basic email regex pattern
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+  return emailRegex.test(email)
+}
+
+// Validate guest cart items
+export function validateGuestCartItems(
+  items: unknown
+): { id: string; quantity: number }[] | null {
+  if (!Array.isArray(items)) return null
+  if (items.length === 0) return null
+  if (items.length > 100) return null // Reasonable max items
+
+  const validatedItems: { id: string; quantity: number }[] = []
+
+  for (const item of items) {
+    if (typeof item !== 'object' || item === null) return null
+
+    const { id, quantity } = item as { id?: unknown; quantity?: unknown }
+
+    // Validate product ID
+    if (typeof id !== 'string') return null
+    if (id.length === 0 || id.length > 100) return null
+    if (!/^[a-zA-Z0-9_-]+$/.test(id)) return null
+
+    // Validate quantity
+    if (typeof quantity !== 'number') return null
+    if (!Number.isInteger(quantity)) return null
+    if (quantity < 1 || quantity > 1000) return null
+
+    validatedItems.push({ id, quantity })
+  }
+
+  return validatedItems
+}
+
+// Validate guest name (optional)
+export function validateGuestName(name: unknown): string | null {
+  if (name === null || name === undefined || name === '') {
+    return null
+  }
+
+  if (typeof name !== 'string') {
+    throw new Error('Name must be a string')
+  }
+
+  const trimmed = name.trim()
+
+  if (trimmed.length > 100) {
+    throw new Error('Name cannot exceed 100 characters')
+  }
+
+  // Sanitize using DOMPurify to remove XSS vectors
+  const sanitized = sanitizeText(trimmed)
+
+  return sanitized || null
 }

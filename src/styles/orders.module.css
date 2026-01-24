@@ -199,7 +199,33 @@
   color: var(--color-charcoal);
 }
 
+/* Tablet */
 @media (max-width: 768px) {
+  .container {
+    padding: 40px 16px;
+  }
+
+  .content h1 {
+    font-size: 30px;
+    margin-bottom: 32px;
+  }
+
+  .loading {
+    padding: 60px 16px;
+  }
+
+  .empty {
+    padding: 60px 32px;
+  }
+
+  .orders {
+    gap: 20px;
+  }
+
+  .order {
+    padding: 24px;
+  }
+
   .orderHeader {
     flex-direction: column;
     gap: 15px;
@@ -209,8 +235,422 @@
     align-items: flex-start;
   }
 
+  .orderInfo h3 {
+    font-size: 18px;
+  }
+
+  .total {
+    font-size: 20px;
+  }
+
   .item {
     flex-direction: column;
     text-align: center;
+    padding: 14px;
+  }
+
+  .itemDetails h4 {
+    font-size: 15px;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .container {
+    padding: 24px 12px;
+  }
+
+  .content h1 {
+    font-size: 24px;
+    margin-bottom: 24px;
+    letter-spacing: 1px;
+  }
+
+  .loading {
+    padding: 40px 12px;
+    font-size: 14px;
+  }
+
+  .empty {
+    padding: 40px 20px;
+  }
+
+  .empty p {
+    font-size: 14px;
+    margin-bottom: 20px;
+  }
+
+  .shopButton {
+    padding: 14px 24px;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+  }
+
+  .orders {
+    gap: 16px;
+  }
+
+  .order {
+    padding: 16px;
+  }
+
+  .orderHeader {
+    margin-bottom: 16px;
+    padding-bottom: 16px;
+    gap: 12px;
+  }
+
+  .orderInfo h3 {
+    font-size: 16px;
+  }
+
+  .orderDate {
+    font-size: 12px;
+  }
+
+  .status {
+    padding: 6px 10px;
+    font-size: 10px;
+  }
+
+  .total {
+    font-size: 18px;
+  }
+
+  .orderItems {
+    gap: 10px;
+  }
+
+  .item {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .itemDetails h4 {
+    font-size: 14px;
+  }
+
+  .itemDetails p {
+    font-size: 12px;
+  }
+
+  .itemPrice {
+    font-size: 14px;
+  }
+}
+
+/* Auth Options for Unauthenticated Users */
+.authOptions {
+  display: flex;
+  gap: 40px;
+  align-items: stretch;
+  max-width: 800px;
+  margin: 0 auto;
+}
+
+.option {
+  flex: 1;
+  background: var(--color-cream-light);
+  padding: 40px;
+  border: 1px solid var(--color-border);
+  text-align: center;
+}
+
+.option h2 {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: 20px;
+  font-weight: 500;
+  color: var(--color-charcoal);
+  margin: 0 0 12px 0;
+  letter-spacing: 0.5px;
+}
+
+.option p {
+  font-size: 14px;
+  color: var(--color-charcoal-light);
+  margin: 0 0 24px 0;
+  line-height: 1.5;
+}
+
+.signInButton {
+  display: inline-block;
+  padding: 14px 32px;
+  background: var(--color-gold);
+  color: var(--color-charcoal);
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.signInButton:hover {
+  background: var(--color-gold-dark);
+  transform: translateY(-1px);
+}
+
+.lookupButton {
+  display: inline-block;
+  padding: 14px 32px;
+  background: transparent;
+  color: var(--color-charcoal);
+  border: 1px solid var(--color-charcoal);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.lookupButton:hover {
+  background: var(--color-charcoal);
+  color: var(--color-cream-light);
+}
+
+.divider {
+  display: flex;
+  align-items: center;
+  color: var(--color-charcoal-light);
+  font-size: 14px;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.divider span {
+  padding: 20px 0;
+}
+
+/* Shipping Info */
+.shippingInfo {
+  display: flex;
+  gap: 12px;
+  padding: 16px;
+  background: var(--color-cream);
+  border: 1px solid var(--color-border);
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.shippingInfo strong {
+  color: var(--color-charcoal-light);
+  text-transform: uppercase;
+  font-size: 12px;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.shippingInfo span {
+  color: var(--color-charcoal);
+}
+
+/* Lookup Page Styles */
+.lookupSection {
+  max-width: 500px;
+  margin: 0 auto;
+}
+
+.lookupForm {
+  background: var(--color-cream-light);
+  padding: 40px;
+  border: 1px solid var(--color-border);
+  margin-bottom: 24px;
+}
+
+.formGroup {
+  margin-bottom: 20px;
+}
+
+.formGroup label {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-charcoal);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 8px;
+}
+
+.formGroup input {
+  width: 100%;
+  padding: 14px 16px;
+  font-size: 15px;
+  border: 1px solid var(--color-border);
+  background: var(--color-cream);
+  color: var(--color-charcoal);
+  transition: border-color 0.2s;
+}
+
+.formGroup input:focus {
+  outline: none;
+  border-color: var(--color-charcoal-light);
+}
+
+.formGroup input::placeholder {
+  color: var(--color-charcoal-light);
+}
+
+.errorMessage {
+  background: rgba(139, 58, 58, 0.1);
+  border: 1px solid var(--color-danger);
+  color: var(--color-danger);
+  padding: 12px 16px;
+  margin-bottom: 20px;
+  font-size: 14px;
+}
+
+.lookupSubmitButton {
+  width: 100%;
+  padding: 16px;
+  background: var(--color-gold);
+  color: var(--color-charcoal);
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.lookupSubmitButton:hover:not(:disabled) {
+  background: var(--color-gold-dark);
+}
+
+.lookupSubmitButton:disabled {
+  background: var(--color-border-dark);
+  color: var(--color-charcoal-light);
+  cursor: not-allowed;
+}
+
+.lookupHelp {
+  text-align: center;
+}
+
+.lookupHelp p {
+  font-size: 14px;
+  color: var(--color-charcoal-light);
+  margin: 0 0 12px 0;
+}
+
+.signInPrompt {
+  margin-top: 16px;
+}
+
+.linkButton {
+  background: none;
+  border: none;
+  color: var(--color-charcoal);
+  font-weight: 600;
+  text-decoration: underline;
+  cursor: pointer;
+  font-size: 14px;
+  padding: 0;
+}
+
+.linkButton:hover {
+  color: var(--color-gold-dark);
+}
+
+.orderResult {
+  max-width: 700px;
+  margin: 0 auto;
+}
+
+.backButton {
+  background: none;
+  border: none;
+  color: var(--color-charcoal-light);
+  font-size: 14px;
+  cursor: pointer;
+  padding: 0;
+  margin-bottom: 24px;
+}
+
+.backButton:hover {
+  color: var(--color-charcoal);
+}
+
+.createAccountPrompt {
+  background: var(--color-cream-light);
+  border: 1px solid var(--color-border);
+  padding: 24px;
+  margin-top: 24px;
+  text-align: center;
+}
+
+.createAccountPrompt p {
+  font-size: 14px;
+  color: var(--color-charcoal-light);
+  margin: 0 0 16px 0;
+}
+
+.continueShoppingLink {
+  display: block;
+  text-align: center;
+  margin-top: 32px;
+  color: var(--color-charcoal-light);
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.continueShoppingLink:hover {
+  color: var(--color-charcoal);
+}
+
+/* Responsive for Auth Options */
+@media (max-width: 768px) {
+  .authOptions {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .divider {
+    justify-content: center;
+  }
+
+  .divider span {
+    padding: 0;
+  }
+
+  .option {
+    padding: 32px 24px;
+  }
+
+  .shippingInfo {
+    flex-direction: column;
+    gap: 8px;
+  }
+}
+
+@media (max-width: 480px) {
+  .option {
+    padding: 24px 20px;
+  }
+
+  .option h2 {
+    font-size: 18px;
+  }
+
+  .signInButton,
+  .lookupButton {
+    padding: 12px 24px;
+    font-size: 12px;
+  }
+
+  .lookupForm {
+    padding: 24px;
+  }
+
+  .formGroup input {
+    padding: 12px 14px;
+    font-size: 14px;
+  }
+
+  .lookupSubmitButton {
+    padding: 14px;
+    font-size: 12px;
   }
 }

@@ -67,6 +67,16 @@ export const rateLimiters = {
         prefix: 'ratelimit:admin',
       })
     : null,
+
+  // Guest order lookup: 10 requests per minute (prevent abuse)
+  guestLookup: redis
+    ? new Ratelimit({
+        redis,
+        limiter: Ratelimit.slidingWindow(10, '1 m'),
+        analytics: true,
+        prefix: 'ratelimit:guest-lookup',
+      })
+    : null,
 }
 
 export type RateLimiterType = keyof typeof rateLimiters

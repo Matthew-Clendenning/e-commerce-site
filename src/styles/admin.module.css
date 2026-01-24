@@ -38,9 +38,7 @@
 }
 
 .createButton:hover {
-  background: #0056b3;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.3);
+  background: var(--color-gold-dark);
 }
 
 .deleteButton {
@@ -494,7 +492,7 @@
 }
 
 .editButton:hover {
-  background: #0056b3;
+  background: var(--color-gold-dark);
 }
 
 .saveButton {

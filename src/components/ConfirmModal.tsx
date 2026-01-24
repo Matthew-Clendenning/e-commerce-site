@@ -12,6 +12,7 @@ type ConfirmModalProps = {
   onConfirm: () => void
   onCancel: () => void
   isLoading?: boolean
+  hideConfirm?: boolean
 }
 
 export default function ConfirmModal({
@@ -23,7 +24,8 @@ export default function ConfirmModal({
   variant = 'default',
   onConfirm,
   onCancel,
-  isLoading = false
+  isLoading = false,
+  hideConfirm = false
 }: ConfirmModalProps) {
   if (!isOpen) return null
 
@@ -44,15 +46,17 @@ export default function ConfirmModal({
             className={styles.cancelButton}
             disabled={isLoading}
           >
-            {cancelText}
+            {hideConfirm ? 'Close' : cancelText}
           </button>
-          <button
-            onClick={onConfirm}
-            className={`${styles.confirmButton} ${styles[variant]}`}
-            disabled={isLoading}
-          >
-            {isLoading ? 'Please wait...' : confirmText}
-          </button>
+          {!hideConfirm && (
+            <button
+              onClick={onConfirm}
+              className={`${styles.confirmButton} ${styles[variant]}`}
+              disabled={isLoading}
+            >
+              {isLoading ? 'Please wait...' : confirmText}
+            </button>
+          )}
         </div>
       </div>
     </div>

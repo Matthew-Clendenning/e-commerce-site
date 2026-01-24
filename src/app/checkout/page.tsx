@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useCartStore } from '@/store/cartStore'
-import { useUser } from '@clerk/nextjs'
+import { useUser, SignInButton } from '@clerk/nextjs'
 import Image from 'next/image'
 import { toast } from 'sonner'
 import styles from '../../styles/checkout.module.css'
@@ -34,10 +34,15 @@ function getTestUser(): { email: string; firstName: string; lastName: string } |
 export default function CheckoutPage() {
   const router = useRouter()
   const { user, isLoaded } = useUser()
-  const { items, totalPrice } = useCartStore()
+  const { items, totalPrice, hasHydrated } = useCartStore()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [testUser, setTestUser] = useState<ReturnType<typeof getTestUser>>(null)
+
+  // Guest checkout form state
+  const [guestEmail, setGuestEmail] = useState('')
+  const [guestName, setGuestName] = useState('')
+  const [emailError, setEmailError] = useState<string | null>(null)
 
   // Check for test user on mount
   useEffect(() => {
@@ -46,34 +51,70 @@ export default function CheckoutPage() {
 
   // The effective user is either Clerk user or test user
   const effectiveUser = user || testUser
+  const isGuest = !effectiveUser
 
-  // Redirect if not signed in (and no test user)
+  // Redirect if cart is empty (only after hydration completes)
   useEffect(() => {
-    if (isLoaded && !user && !testUser) {
-      router.push('/sign-in?redirect_url=/checkout')
-    }
-  }, [isLoaded, user, testUser, router])
-
-  // Redirect if cart is empty
-  useEffect(() => {
-    if (items.length === 0) {
+    if (hasHydrated && items.length === 0) {
       router.push('/cart')
     }
-  }, [items, router])
+  }, [hasHydrated, items, router])
+
+  const validateEmail = (email: string): boolean => {
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    return emailRegex.test(email)
+  }
 
   const handleCheckout = async () => {
     setLoading(true)
     setError(null)
+    setEmailError(null)
+
+    // Validate guest email if not authenticated
+    if (isGuest) {
+      if (!guestEmail) {
+        setEmailError('Email is required')
+        setLoading(false)
+        return
+      }
+      if (!validateEmail(guestEmail)) {
+        setEmailError('Please enter a valid email address')
+        setLoading(false)
+        return
+      }
+    }
 
     try {
+      const body: Record<string, unknown> = {}
+
+      if (isGuest) {
+        // For guest checkout, send cart items and customer info
+        body.email = guestEmail
+        body.name = guestName || undefined
+        body.items = items.map(item => ({
+          id: item.id,
+          quantity: item.quantity
+        }))
+      }
+
       const response = await fetch('/api/checkout', {
         method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(body),
       })
 
       const data = await response.json()
 
       if (!response.ok) {
         throw new Error(data.error || 'Failed to create checkout session')
+      }
+
+      // Store guestToken in sessionStorage for success page
+      if (data.guestToken) {
+        sessionStorage.setItem('guestToken', data.guestToken)
+        sessionStorage.setItem('guestEmail', guestEmail)
       }
 
       // Redirect to Stripe Checkout
@@ -88,7 +129,7 @@ export default function CheckoutPage() {
     }
   }
 
-  if (!isLoaded || !effectiveUser || items.length === 0) {
+  if (!isLoaded || !hasHydrated || items.length === 0) {
     return (
       <div className={styles.container}>
         <div className={styles.loading}>Loading...</div>
@@ -109,7 +150,7 @@ export default function CheckoutPage() {
           {/* Order Summary */}
           <div className={styles.orderSummary}>
             <h2>Order Summary</h2>
-            
+
             <div className={styles.items}>
               {items.map(item => (
                 <div key={item.id} className={styles.item}>
@@ -152,19 +193,57 @@ export default function CheckoutPage() {
           {/* Customer Info */}
           <div className={styles.customerInfo}>
             <h2>Customer Information</h2>
-            
-            <div className={styles.infoCard}>
-              <div className={styles.infoRow}>
-                <strong>Email:</strong>
-                <span>{user?.emailAddresses?.[0]?.emailAddress || testUser?.email}</span>
+
+            {effectiveUser ? (
+              // Authenticated user info
+              <div className={styles.infoCard}>
+                <div className={styles.infoRow}>
+                  <strong>Email:</strong>
+                  <span>{user?.emailAddresses?.[0]?.emailAddress || testUser?.email}</span>
+                </div>
+                <div className={styles.infoRow}>
+                  <strong>Name:</strong>
+                  <span>
+                    {user?.firstName || testUser?.firstName} {user?.lastName || testUser?.lastName}
+                  </span>
+                </div>
               </div>
-              <div className={styles.infoRow}>
-                <strong>Name:</strong>
-                <span>
-                  {user?.firstName || testUser?.firstName} {user?.lastName || testUser?.lastName}
-                </span>
+            ) : (
+              // Guest checkout form
+              <div className={styles.guestForm}>
+                <div className={styles.formGroup}>
+                  <label htmlFor="email">Email *</label>
+                  <input
+                    type="email"
+                    id="email"
+                    value={guestEmail}
+                    onChange={(e) => {
+                      setGuestEmail(e.target.value)
+                      setEmailError(null)
+                    }}
+                    placeholder="your@email.com"
+                    className={emailError ? styles.inputError : ''}
+                  />
+                  {emailError && <span className={styles.fieldError}>{emailError}</span>}
+                </div>
+                <div className={styles.formGroup}>
+                  <label htmlFor="name">Name (optional)</label>
+                  <input
+                    type="text"
+                    id="name"
+                    value={guestName}
+                    onChange={(e) => setGuestName(e.target.value)}
+                    placeholder="Your name"
+                  />
+                </div>
+                <p className={styles.signInLink}>
+                  Already have an account?{' '}
+                  <SignInButton mode="modal">
+                    <button type="button" className={styles.linkButton}>Sign in</button>
+                  </SignInButton>
+                </p>
               </div>
-            </div>
+            )}
 
             <p className={styles.infoText}>
               You&apos;ll provide your shipping address in the next step.
@@ -185,7 +264,7 @@ export default function CheckoutPage() {
             </button>
 
             <p className={styles.secureText}>
-              🔒 Secure checkout powered by Stripe
+              Secure checkout powered by Stripe
             </p>
           </div>
         </div>

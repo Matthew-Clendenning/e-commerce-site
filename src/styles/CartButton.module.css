@@ -38,3 +38,21 @@
     text-align: center;
     line-height: 1.2;
 }
+
+/* Small Mobile */
+@media (max-width: 480px) {
+    .cartButton {
+        padding: 6px;
+    }
+
+    .icon {
+        width: 22px;
+        height: 22px;
+    }
+
+    .badge {
+        font-size: 9px;
+        padding: 1px 5px;
+        min-width: 16px;
+    }
+}

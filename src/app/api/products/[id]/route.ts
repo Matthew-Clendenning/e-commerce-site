@@ -86,23 +86,41 @@ export async function PATCH(
       price?: number
       name?: string
       description?: string | null
+      imageUrl?: string | null
     } = {}
 
     // Validate each field if provided
     if (body.stock !== undefined) {
       updateData.stock = validateStock(body.stock)
     }
-    
+
     if (body.price !== undefined) {
       updateData.price = validatePrice(body.price)
     }
-    
+
     if (body.name !== undefined) {
       updateData.name = validateProductName(body.name)
     }
-    
+
     if (body.description !== undefined) {
       updateData.description = validateDescription(body.description)
+    }
+
+    if (body.imageUrl !== undefined) {
+      // Allow null/empty to clear image, or validate URL format
+      if (body.imageUrl === null || body.imageUrl === '') {
+        updateData.imageUrl = null
+      } else if (typeof body.imageUrl === 'string') {
+        // Accept local paths (/images/...) or full URLs
+        if (body.imageUrl.startsWith('/') || body.imageUrl.startsWith('http')) {
+          updateData.imageUrl = body.imageUrl
+        } else {
+          return NextResponse.json(
+            { error: 'Image URL must be a valid path or URL' },
+            { status: 400 }
+          )
+        }
+      }
     }
 
     const product = await prisma.product.update({

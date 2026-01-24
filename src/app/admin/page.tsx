@@ -74,7 +74,8 @@ export default function AdminPage() {
     name: '',
     price: '',
     stock: '',
-    description: ''
+    description: '',
+    imageUrl: ''
   })
   const [saving, setSaving] = useState(false)
   const [showCreateForm, setShowCreateForm] = useState(false)
@@ -96,6 +97,19 @@ export default function AdminPage() {
     productId: string
     productName: string
   }>({ isOpen: false, productId: '', productName: '' })
+
+  // Category editing state
+  const [editingCategoryId, setEditingCategoryId] = useState<string | null>(null)
+  const [editCategoryForm, setEditCategoryForm] = useState({
+    name: '',
+    description: ''
+  })
+  const [deleteCategoryConfirm, setDeleteCategoryConfirm] = useState<{
+    isOpen: boolean
+    categoryId: string
+    categoryName: string
+    productCount: number
+  }>({ isOpen: false, categoryId: '', categoryName: '', productCount: 0 })
 
   // Check admin access
   useEffect(() => {
@@ -206,13 +220,14 @@ export default function AdminPage() {
       name: product.name,
       price: product.price.toString(),
       stock: product.stock.toString(),
-      description: product.description || ''
+      description: product.description || '',
+      imageUrl: product.imageUrl || ''
     })
   }
 
   const cancelEdit = () => {
     setEditingId(null)
-    setEditForm({ name: '', price: '', stock: '', description: '' })
+    setEditForm({ name: '', price: '', stock: '', description: '', imageUrl: '' })
   }
 
   const saveEdit = async (productId: string) => {
@@ -225,7 +240,8 @@ export default function AdminPage() {
           name: editForm.name,
           price: parseFloat(editForm.price),
           stock: parseInt(editForm.stock),
-          description: editForm.description
+          description: editForm.description,
+          imageUrl: editForm.imageUrl || null
         })
       })
 
@@ -237,7 +253,7 @@ export default function AdminPage() {
 
       await fetchProducts()
       setEditingId(null)
-      setEditForm({ name: '', price: '', stock: '', description: '' })
+      setEditForm({ name: '', price: '', stock: '', description: '', imageUrl: '' })
       toast.success('Product updated successfully!')
     } catch (error) {
       // Error updating product
@@ -369,6 +385,92 @@ export default function AdminPage() {
     if (stock === 0) return 'out'
     if (stock <= 5) return 'low'
     return 'good'
+  }
+
+  // Category editing functions
+  const startEditCategory = (category: Category) => {
+    setEditingCategoryId(category.id)
+    setEditCategoryForm({
+      name: category.name,
+      description: category.description || ''
+    })
+  }
+
+  const cancelEditCategory = () => {
+    setEditingCategoryId(null)
+    setEditCategoryForm({ name: '', description: '' })
+  }
+
+  const saveEditCategory = async (categoryId: string) => {
+    if (!editCategoryForm.name) {
+      toast.warning('Category name is required')
+      return
+    }
+
+    setSaving(true)
+    try {
+      const response = await fetch(`/api/categories/${categoryId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editCategoryForm.name,
+          description: editCategoryForm.description || null
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update category')
+      }
+
+      await fetchCategories()
+      setEditingCategoryId(null)
+      setEditCategoryForm({ name: '', description: '' })
+      toast.success('Category updated successfully!')
+    } catch (error) {
+      toast.error(`Failed to update category: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const openDeleteCategoryConfirm = (category: Category) => {
+    setDeleteCategoryConfirm({
+      isOpen: true,
+      categoryId: category.id,
+      categoryName: category.name,
+      productCount: category._count?.products || 0
+    })
+  }
+
+  const closeDeleteCategoryConfirm = () => {
+    setDeleteCategoryConfirm({ isOpen: false, categoryId: '', categoryName: '', productCount: 0 })
+  }
+
+  const confirmDeleteCategory = async () => {
+    const { categoryId } = deleteCategoryConfirm
+
+    setSaving(true)
+    try {
+      const response = await fetch(`/api/categories/${categoryId}`, {
+        method: 'DELETE'
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete category')
+      }
+
+      closeDeleteCategoryConfirm()
+      await fetchCategories()
+      toast.success('Category deleted successfully!')
+    } catch (error) {
+      toast.error(`Failed to delete category: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setSaving(false)
+    }
   }
 
   if (loading) {
@@ -580,16 +682,26 @@ export default function AdminPage() {
                         )}
                         <div>
                           {editingId === product.id ? (
-                            <input
-                              type="text"
-                              value={editForm.name}
-                              onChange={(e) => setEditForm({...editForm, name: e.target.value})}
-                              className={styles.input}
-                            />
+                            <>
+                              <input
+                                type="text"
+                                value={editForm.name}
+                                onChange={(e) => setEditForm({...editForm, name: e.target.value})}
+                                className={styles.input}
+                                placeholder="Product name"
+                              />
+                              <input
+                                type="text"
+                                value={editForm.imageUrl}
+                                onChange={(e) => setEditForm({...editForm, imageUrl: e.target.value})}
+                                className={styles.input}
+                                placeholder="Image URL (e.g., /images/watch.jpg)"
+                                style={{ marginTop: '5px', fontSize: '12px' }}
+                              />
+                            </>
                           ) : (
                             <div className={styles.productName}>{product.name}</div>
                           )}
-                          <div className={styles.productSlug}>{product.slug}</div>
                         </div>
                       </div>
                     </td>
@@ -740,16 +852,71 @@ export default function AdminPage() {
           <div className={styles.categoryGrid}>
             {categories.map((category) => (
               <div key={category.id} className={styles.categoryCard}>
-                <h3>{category.name}</h3>
-                <p className={styles.categoryDesc}>
-                  {category.description || 'No description'}
-                </p>
-                <div className={styles.categoryMeta}>
-                  <span className={styles.categorySlug}>/{category.slug}</span>
-                  <span className={styles.categoryCount}>
-                    {category._count?.products || 0} products
-                  </span>
-                </div>
+                {editingCategoryId === category.id ? (
+                  <>
+                    <div className={styles.formGroup}>
+                      <label>Category Name *</label>
+                      <input
+                        type="text"
+                        value={editCategoryForm.name}
+                        onChange={(e) => setEditCategoryForm({...editCategoryForm, name: e.target.value})}
+                        className={styles.formInput}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Description</label>
+                      <textarea
+                        value={editCategoryForm.description}
+                        onChange={(e) => setEditCategoryForm({...editCategoryForm, description: e.target.value})}
+                        className={styles.formTextarea}
+                        rows={2}
+                      />
+                    </div>
+                    <div className={styles.actions} style={{ marginTop: '10px' }}>
+                      <button
+                        onClick={() => saveEditCategory(category.id)}
+                        className={styles.saveButton}
+                        disabled={saving}
+                      >
+                        {saving ? 'Saving...' : 'Save'}
+                      </button>
+                      <button
+                        onClick={cancelEditCategory}
+                        className={styles.cancelButton}
+                        disabled={saving}
+                      >
+                        Cancel
+                      </button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <h3>{category.name}</h3>
+                    <p className={styles.categoryDesc}>
+                      {category.description || 'No description'}
+                    </p>
+                    <div className={styles.categoryMeta}>
+                      <span className={styles.categorySlug}>/{category.slug}</span>
+                      <span className={styles.categoryCount}>
+                        {category._count?.products || 0} products
+                      </span>
+                    </div>
+                    <div className={styles.actions} style={{ marginTop: '15px' }}>
+                      <button
+                        onClick={() => startEditCategory(category)}
+                        className={styles.editButton}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        onClick={() => openDeleteCategoryConfirm(category)}
+                        className={styles.deleteButton}
+                      >
+                        Delete
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ))}
           </div>
@@ -962,7 +1129,7 @@ export default function AdminPage() {
         </>
       )}
 
-      {/* Delete Confirmation Modal */}
+      {/* Delete Product Confirmation Modal */}
       <ConfirmModal
         isOpen={deleteConfirm.isOpen}
         title="Delete Product"
@@ -973,6 +1140,24 @@ export default function AdminPage() {
         onConfirm={confirmDelete}
         onCancel={closeDeleteConfirm}
         isLoading={saving}
+      />
+
+      {/* Delete Category Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteCategoryConfirm.isOpen}
+        title="Delete Category"
+        message={
+          deleteCategoryConfirm.productCount > 0
+            ? `Cannot delete "${deleteCategoryConfirm.categoryName}" because it has ${deleteCategoryConfirm.productCount} product(s). Please move or delete the products first.`
+            : `Are you sure you want to delete "${deleteCategoryConfirm.categoryName}"? This action cannot be undone.`
+        }
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={confirmDeleteCategory}
+        onCancel={closeDeleteCategoryConfirm}
+        isLoading={saving}
+        hideConfirm={deleteCategoryConfirm.productCount > 0}
       />
     </div>
   )

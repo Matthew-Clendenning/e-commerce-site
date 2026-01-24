@@ -1,6 +1,5 @@
 generator client {
   provider = "prisma-client-js"
-  // Note: driverAdapters is now enabled by default in Prisma 7+
 }
 
 datasource db {
@@ -8,14 +7,13 @@ datasource db {
 }
 
 model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
+  id        String     @id @default(cuid())
+  email     String     @unique
   name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  orders    Order[]
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
   cart      CartItem[]
+  orders    Order[]
 }
 
 model Category {
@@ -25,78 +23,64 @@ model Category {
   description String?
   createdAt   DateTime  @default(now())
   updatedAt   DateTime  @updatedAt
-  
   products    Product[]
 }
 
 model Product {
-  id          String   @id @default(cuid())
+  id          String      @id @default(cuid())
   name        String
-  slug        String   @unique
+  slug        String      @unique
   description String?
-  price       Decimal  @db.Decimal(10, 2)
+  price       Decimal     @db.Decimal(10, 2)
   imageUrl    String?
-  stock       Int      @default(0)
+  stock       Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
   categoryId  String
-  category    Category @relation(fields: [categoryId], references: [id])
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
-  
   cartItems   CartItem[]
   orderItems  OrderItem[]
-  
+  category    Category    @relation(fields: [categoryId], references: [id])
+
   @@index([categoryId])
   @@index([slug])
 }
 
 model Order {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
-  // Order details
-  status    OrderStatus @default(PENDING)
-  total     Decimal  @db.Decimal(10, 2)
-  
-  // Stripe
-  stripeSessionId     String?  @unique
-  stripePaymentIntent String?  @unique
-  
-  // Customer info
-  customerEmail String
-  customerName  String?
-  
-  // Shipping address
-  shippingAddress Json?
-  
-  // Timestamps
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  
-  // Relations
-  items OrderItem[]
-  
+  id                  String      @id @default(cuid())
+  status              OrderStatus @default(PENDING)
+  total               Decimal     @db.Decimal(10, 2)
+  userId              String?
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+  customerEmail       String
+  customerName        String?
+  stripePaymentIntent String?     @unique
+  stripeSessionId     String?     @unique
+  shippingAddress     Json?
+  guestToken          String?     @unique @default(cuid())
+  isGuest             Boolean     @default(false)
+  user                User?       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items               OrderItem[]
+
   @@index([userId])
   @@index([status])
   @@index([createdAt])
+  @@index([customerEmail])
+  @@index([guestToken])
 }
 
 model OrderItem {
-  id        String @id @default(cuid())
-  orderId   String
-  order     Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  
-  productId String
-  product   Product @relation(fields: [productId], references: [id])
-  
-  // Snapshot of product at time of purchase
-  name      String
-  price     Decimal @db.Decimal(10, 2)
+  id        String   @id @default(cuid())
   quantity  Int
-  imageUrl  String?
-  
+  price     Decimal  @db.Decimal(10, 2)
+  orderId   String
+  productId String
   createdAt DateTime @default(now())
-  
+  imageUrl  String?
+  name      String
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id])
+
   @@index([orderId])
   @@index([productId])
 }
@@ -106,13 +90,11 @@ model CartItem {
   quantity  Int      @default(1)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
   userId    String
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
   productId String
   product   Product  @relation(fields: [productId], references: [id])
-  
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
   @@unique([userId, productId])
   @@index([userId])
   @@index([productId])

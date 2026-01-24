@@ -63,3 +63,74 @@
   transform: translateY(-2px);
   box-shadow: 0 4px 12px rgba(201, 169, 98, 0.4);
 }
+
+/* Tablet */
+@media (max-width: 768px) {
+  .content {
+    padding: 48px 32px;
+    max-width: 450px;
+  }
+
+  .icon {
+    font-size: 60px;
+    margin-bottom: 20px;
+  }
+
+  .title {
+    font-size: 30px;
+    letter-spacing: 1.5px;
+  }
+
+  .message {
+    font-size: 15px;
+  }
+
+  .submessage {
+    margin-bottom: 32px;
+  }
+
+  .homeButton {
+    padding: 14px 28px;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .container {
+    padding: 16px;
+  }
+
+  .content {
+    padding: 36px 24px;
+    max-width: none;
+    width: 100%;
+  }
+
+  .icon {
+    font-size: 48px;
+    margin-bottom: 16px;
+  }
+
+  .title {
+    font-size: 24px;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+
+  .message {
+    font-size: 14px;
+  }
+
+  .submessage {
+    font-size: 13px;
+    margin-bottom: 28px;
+  }
+
+  .homeButton {
+    padding: 12px 24px;
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+}

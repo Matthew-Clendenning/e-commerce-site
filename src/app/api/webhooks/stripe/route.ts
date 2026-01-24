@@ -44,9 +44,22 @@ export async function POST(request: Request) {
 
         const orderId = session.metadata?.orderId;
         const userId = session.metadata?.userId;
+        const isGuest = session.metadata?.isGuest === 'true';
+        const customerEmail = session.customer_email;
 
-        if (!orderId || !userId) {
-          return NextResponse.json({ error: 'Missing metadata' }, { status: 400 });
+        if (!orderId) {
+          return NextResponse.json({ error: 'Missing order ID' }, { status: 400 });
+        }
+
+        // For guest orders, check if email matches an existing user (soft account linking)
+        let linkedUserId: string | null = null;
+        if (isGuest && customerEmail) {
+          const existingUser = await prisma.user.findUnique({
+            where: { email: customerEmail }
+          });
+          if (existingUser) {
+            linkedUserId = existingUser.id;
+          }
         }
 
         await prisma.order.update({
@@ -56,6 +69,8 @@ export async function POST(request: Request) {
             stripePaymentIntent: session.payment_intent as string,
             // Use collected_information for newer Stripe versions
             shippingAddress: (session.collected_information?.shipping_details ?? null) as unknown as Prisma.InputJsonValue,
+            // Soft link to existing user if email matches
+            ...(linkedUserId ? { userId: linkedUserId, isGuest: false } : {}),
           },
         });
 
@@ -86,10 +101,12 @@ export async function POST(request: Request) {
           )
         )
 
-        // Clear user's cart after successful payment
-        await prisma.cartItem.deleteMany({
-          where: { userId }
-        })
+        // Only clear cart for authenticated users (not guests)
+        if (userId && !isGuest) {
+          await prisma.cartItem.deleteMany({
+            where: { userId }
+          })
+        }
 
         break
       }

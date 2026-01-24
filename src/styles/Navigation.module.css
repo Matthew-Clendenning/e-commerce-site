@@ -27,6 +27,10 @@
   transition: color 0.2s ease;
 }
 
+.logo:hover {
+  color: var(--color-gold);
+}
+
 .links {
   display: flex;
   gap: 32px;
@@ -34,7 +38,7 @@
 }
 
 .link {
-  font-size: 15px;
+  font-size: 14px;
   font-weight: 500;
   color: var(--color-charcoal-light);
   text-decoration: none;
@@ -85,25 +89,187 @@
   color: var(--color-gold);
 }
 
+/* Mobile Menu Button - Hidden on desktop */
+.mobileMenuButton {
+  display: none;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  color: var(--color-charcoal);
+  transition: color 0.2s ease;
+}
+
+.mobileMenuButton:hover {
+  color: var(--color-gold);
+}
+
+/* Mobile Overlay */
+.mobileOverlay {
+  display: none;
+}
+
+/* Mobile Menu */
+.mobileMenu {
+  display: none;
+}
+
+.mobileLink {
+  display: block;
+  padding: 16px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-charcoal);
+  text-decoration: none;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  border-bottom: 1px solid var(--color-border);
+  transition: all 0.2s ease;
+}
+
+.mobileLink:hover {
+  background: var(--color-cream);
+  color: var(--color-gold);
+}
+
+.mobileSignIn {
+  display: block;
+  width: calc(100% - 48px);
+  margin: 24px;
+  padding: 14px 24px;
+  background: var(--color-gold);
+  color: var(--color-charcoal);
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobileSignIn:hover {
+  background: var(--color-gold-dark);
+}
+
+/* Tablet */
 @media (max-width: 768px) {
   .container {
     height: 60px;
+    padding: 0 16px;
+  }
+
+  .logo {
+    font-size: 22px;
+  }
+
+  /* Hide desktop links */
+  .links {
+    display: none;
+  }
+
+  .auth {
+    gap: 12px;
+  }
+
+  .signInButton {
+    padding: 6px;
+  }
+
+  /* Show mobile menu button */
+  .mobileMenuButton {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Mobile overlay */
+  .mobileOverlay {
+    display: block;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(26, 26, 26, 0.5);
+    z-index: 98;
+    animation: fadeIn 0.2s ease;
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  /* Mobile menu */
+  .mobileMenu {
+    display: block;
+    position: fixed;
+    top: 60px;
+    left: 0;
+    right: 0;
+    background: var(--color-cream-light);
+    z-index: 99;
+    border-bottom: 1px solid var(--color-border);
+    box-shadow: 0 4px 12px rgba(26, 26, 26, 0.1);
+    animation: slideDown 0.2s ease;
+    max-height: calc(100vh - 60px);
+    overflow-y: auto;
+  }
+
+  @keyframes slideDown {
+    from {
+      opacity: 0;
+      transform: translateY(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .container {
+    height: 56px;
+    padding: 0 12px;
   }
 
   .logo {
     font-size: 20px;
   }
 
-  .links {
-    gap: 16px;
+  .auth {
+    gap: 8px;
   }
 
-  .link {
+  .mobileMenuButton {
+    padding: 6px;
+  }
+
+  .mobileOverlay {
+    top: 56px;
+  }
+
+  .mobileMenu {
+    top: 56px;
+    max-height: calc(100vh - 56px);
+  }
+
+  .mobileLink {
+    padding: 14px 20px;
     font-size: 13px;
   }
 
-  .signInButton {
-    padding: 8px 16px;
-    font-size: 13px;
+  .mobileSignIn {
+    margin: 20px;
+    width: calc(100% - 40px);
+    padding: 12px 20px;
+    font-size: 12px;
   }
 }

@@ -25,3 +25,21 @@
     cursor: not-allowed;
     transform: none;
 }
+
+/* Tablet */
+@media (max-width: 768px) {
+    .addToCart {
+        padding: 14px 24px;
+        font-size: 13px;
+        letter-spacing: 1.5px;
+    }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+    .addToCart {
+        padding: 12px 20px;
+        font-size: 12px;
+        letter-spacing: 1px;
+    }
+}

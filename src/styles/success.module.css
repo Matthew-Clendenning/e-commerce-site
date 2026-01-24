@@ -125,3 +125,151 @@
   text-transform: uppercase;
   letter-spacing: 1px;
 }
+
+/* Order Details */
+.orderDetails {
+  background: var(--color-cream);
+  border: 1px solid var(--color-border);
+  padding: 24px;
+  margin: 24px 0;
+  text-align: left;
+}
+
+.orderRow {
+  display: flex;
+  justify-content: space-between;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 14px;
+}
+
+.orderRow:last-child {
+  border-bottom: none;
+}
+
+.orderRow span {
+  color: var(--color-charcoal-light);
+}
+
+.orderRow strong {
+  color: var(--color-charcoal);
+}
+
+/* Account Prompt */
+.accountPrompt {
+  background: var(--color-cream);
+  border: 1px solid var(--color-border);
+  padding: 24px;
+  margin: 24px 0;
+}
+
+.accountPrompt p {
+  font-size: 14px;
+  color: var(--color-charcoal-light);
+  margin: 0 0 16px 0;
+  line-height: 1.5;
+}
+
+.createAccountButton {
+  display: inline-block;
+  padding: 14px 28px;
+  background: var(--color-charcoal);
+  color: var(--color-cream-light);
+  border: none;
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.createAccountButton:hover {
+  background: var(--color-charcoal-light);
+}
+
+.linkedMessage {
+  font-size: 14px;
+  color: var(--color-success);
+  margin: 16px 0;
+}
+
+/* Tablet */
+@media (max-width: 768px) {
+  .success,
+  .error,
+  .loading {
+    padding: 48px 32px;
+    max-width: 450px;
+  }
+
+  .success h1 {
+    font-size: 30px;
+    letter-spacing: 1.5px;
+  }
+
+  .checkmark {
+    margin-bottom: 24px;
+  }
+
+  .message {
+    font-size: 15px;
+  }
+
+  .submessage {
+    margin-bottom: 36px;
+  }
+
+  .ordersButton,
+  .homeButton {
+    padding: 14px 20px;
+    font-size: 12px;
+    letter-spacing: 1.5px;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .container {
+    padding: 16px;
+  }
+
+  .success,
+  .error,
+  .loading {
+    padding: 36px 24px;
+    max-width: none;
+    width: 100%;
+  }
+
+  .checkmark svg {
+    width: 60px;
+    height: 60px;
+  }
+
+  .success h1 {
+    font-size: 24px;
+    letter-spacing: 1px;
+    margin-bottom: 16px;
+  }
+
+  .message {
+    font-size: 14px;
+  }
+
+  .submessage {
+    font-size: 13px;
+    margin-bottom: 28px;
+  }
+
+  .ordersButton,
+  .homeButton {
+    padding: 12px 18px;
+    font-size: 11px;
+    letter-spacing: 1px;
+  }
+
+  .error h1 {
+    font-size: 24px;
+  }
+}
