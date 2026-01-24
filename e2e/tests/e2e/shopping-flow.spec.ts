@@ -147,19 +147,28 @@ test.describe('E2E: Shopping Flows', () => {
   })
 
   /**
-   * Test: Checkout requires authentication
+   * Test: Guest checkout is available
    *
    * USER STORY:
-   * As a security measure,
-   * The system should require users to sign in before checkout,
-   * So we can track orders and provide receipts.
+   * As a guest user,
+   * I want to checkout without creating an account,
+   * So I can quickly complete my purchase.
    */
-  test('checkout redirects unauthenticated users to sign-in', async ({ page }) => {
-    // Try to access checkout directly without auth
+  test('checkout allows guest users with email form', async ({ page }) => {
+    // Add item to cart first (checkout requires items)
+    await page.goto('/products')
+    await page.locator('[data-testid="product-card"]').first().click()
+    await page.click('button:has-text("Add to Cart")')
+
+    // Go to checkout
     await page.goto('/checkout')
 
-    // Should redirect to sign-in
-    await expect(page).toHaveURL(/sign-in/)
+    // Should stay on checkout page (not redirect to sign-in)
+    await expect(page).toHaveURL(/checkout/)
+
+    // Should see guest checkout form with email field
+    await expect(page.locator('input#email')).toBeVisible()
+    await expect(page.locator('label:has-text("Email")')).toBeVisible()
   })
 })
 
