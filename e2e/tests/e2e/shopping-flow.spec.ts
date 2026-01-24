@@ -154,19 +154,27 @@ test.describe('E2E: Shopping Flows', () => {
    * I want to checkout without creating an account,
    * So I can quickly complete my purchase.
    */
-  test('checkout allows guest users with email form', async ({ page }) => {
-    // Add item to cart first (checkout requires items)
-    await page.goto('/products')
-    await page.locator('[data-testid="product-card"]').first().click()
-    await page.click('button:has-text("Add to Cart")')
+  test('checkout allows guest users with email form', async ({ page, testData }) => {
+    const productDetailPage = new ProductDetailPage(page)
+    const cartSidebar = new CartSidebarComponent(page)
 
-    // Go to checkout
-    await page.goto('/checkout')
+    // Step 1: Find a product to buy
+    const product = testData.products.find((p) => p.stock > 0)!
 
-    // Should stay on checkout page (not redirect to sign-in)
+    // Step 2: Navigate to product and add to cart
+    await productDetailPage.goto(product.slug)
+    await productDetailPage.addToCart()
+
+    // Step 3: Verify item in cart
+    await cartSidebar.expectOpen()
+
+    // Step 4: Go to checkout
+    await cartSidebar.proceedToCheckout()
+
+    // Step 5: Should stay on checkout page (not redirect to sign-in)
     await expect(page).toHaveURL(/checkout/)
 
-    // Should see guest checkout form with email field
+    // Step 6: Should see guest checkout form with email field
     await expect(page.locator('input#email')).toBeVisible()
     await expect(page.locator('label:has-text("Email")')).toBeVisible()
   })
