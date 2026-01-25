@@ -1,7 +1,18 @@
 import { Resend } from 'resend'
 
-// Initialize Resend client
-const resend = new Resend(process.env.RESEND_API_KEY)
+// Lazy initialize Resend client to avoid build-time errors when API key is not set
+let resendClient: Resend | null = null
+
+function getResendClient(): Resend {
+  if (!resendClient) {
+    const apiKey = process.env.RESEND_API_KEY
+    if (!apiKey) {
+      throw new Error('RESEND_API_KEY environment variable is not set')
+    }
+    resendClient = new Resend(apiKey)
+  }
+  return resendClient
+}
 
 const FROM_EMAIL = process.env.FROM_EMAIL || 'orders@yourdomain.com'
 const STORE_NAME = process.env.NEXT_PUBLIC_STORE_NAME || 'LuxeMarket'
@@ -172,7 +183,7 @@ export async function sendOrderConfirmationEmail(data: OrderEmailData) {
   `
 
   try {
-    const result = await resend.emails.send({
+    const result = await getResendClient().emails.send({
       from: `${STORE_NAME} <${FROM_EMAIL}>`,
       to: customerEmail,
       subject: `Order Confirmed - #${orderId.slice(-8)}`,
@@ -293,7 +304,7 @@ export async function sendShippingNotificationEmail(data: ShippingEmailData) {
   `
 
   try {
-    const result = await resend.emails.send({
+    const result = await getResendClient().emails.send({
       from: `${STORE_NAME} <${FROM_EMAIL}>`,
       to: customerEmail,
       subject: `Your Order Has Shipped - #${orderId.slice(-8)}`,
@@ -371,7 +382,7 @@ export async function sendDeliveryConfirmationEmail(data: OrderEmailData) {
   `
 
   try {
-    const result = await resend.emails.send({
+    const result = await getResendClient().emails.send({
       from: `${STORE_NAME} <${FROM_EMAIL}>`,
       to: customerEmail,
       subject: `Your Order Has Been Delivered - #${orderId.slice(-8)}`,
