@@ -92,10 +92,16 @@ export abstract class BasePage {
 
   /**
    * Wait for the page to fully load
-   * Uses 'load' state instead of 'networkidle' for better CI compatibility
+   * Uses 'domcontentloaded' then waits for network to settle
+   * This ensures React hydration completes before interactions
    */
   async waitForPageLoad(): Promise<void> {
-    await this.page.waitForLoadState('load')
+    await this.page.waitForLoadState('domcontentloaded')
+    // Wait for network to be idle with a reasonable timeout
+    // This ensures React hydration completes
+    await this.page.waitForLoadState('networkidle', { timeout: 10000 }).catch(() => {
+      // If networkidle times out, continue anyway - page is likely ready
+    })
   }
 
   /**

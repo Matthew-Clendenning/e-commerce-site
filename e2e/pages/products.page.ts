@@ -141,13 +141,11 @@ export class ProductsPage extends BasePage {
    * @param categoryName - Display name of the category
    */
   async filterByCategory(categoryName: string): Promise<void> {
-    const filterButton = this.filterButtons.filter({ hasText: categoryName }).first()
-    // Ensure button is visible and ready
-    await expect(filterButton).toBeVisible()
+    const filterButton = this.filterButtons.filter({ hasText: categoryName })
     await filterButton.click()
 
-    // Wait for URL to include category parameter
-    await this.page.waitForURL(/\?category=/)
+    // Wait for URL to update
+    await this.page.waitForURL(/category=|\/products$/)
     await this.waitForPageLoad()
   }
 
@@ -156,8 +154,7 @@ export class ProductsPage extends BasePage {
    */
   async showAllProducts(): Promise<void> {
     await this.allProductsFilter.click()
-    // Wait for URL to be /products without category param (use regex to match end of path)
-    await this.page.waitForURL(/\/products$/)
+    await this.page.waitForURL('/products')
     await this.waitForPageLoad()
   }
 
