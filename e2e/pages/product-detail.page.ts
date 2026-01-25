@@ -145,25 +145,23 @@ export class ProductDetailPage extends BasePage {
 
   /**
    * Add to cart and wait for success
-   * Waits for button to return to normal state
+   * Waits for toast notification to confirm the action completed
    */
   async addToCart(): Promise<void> {
     await this.clickAddToCart()
 
-    // Wait for "Adding..." state
-    await expect(this.addToCartButton).toContainText(/Adding/i)
-
-    // Wait for button to return to normal
-    await expect(this.addToCartButton).toContainText(/Add to cart/i, { timeout: 5000 })
+    // Wait for the toast notification (reliable indicator that add-to-cart completed)
+    // The "Adding..." state is too brief to catch reliably in fast environments
+    await expect(this.page.locator('[data-sonner-toast]')).toBeVisible({ timeout: 5000 })
   }
 
   /**
-   * Add to cart and verify toast
-   * Complete flow with toast confirmation
+   * Add to cart and verify toast message
+   * Complete flow with specific toast message confirmation
    */
   async addToCartWithConfirmation(): Promise<void> {
     const title = await this.getTitle()
-    await this.addToCart()
+    await this.clickAddToCart()
     await this.expectToast(`${title} added to cart`)
   }
 

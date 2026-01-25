@@ -92,10 +92,10 @@ export abstract class BasePage {
 
   /**
    * Wait for the page to fully load
-   * Waits for network requests to settle
+   * Uses 'load' state instead of 'networkidle' for better CI compatibility
    */
   async waitForPageLoad(): Promise<void> {
-    await this.page.waitForLoadState('networkidle')
+    await this.page.waitForLoadState('load')
   }
 
   /**
