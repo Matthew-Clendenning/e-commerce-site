@@ -1,5 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import FavoriteButton from './FavoriteButton';
 import styles from '../styles/ProductCard.module.css';
 
 type ProductCardProps = {
@@ -17,6 +18,7 @@ type ProductCardProps = {
 };
 
 export default function ProductCard({
+    id,
     name,
     slug,
     description,
@@ -42,6 +44,11 @@ export default function ProductCard({
         {stock === 0 && (
           <div className={styles.outOfStock}>Out of Stock</div>
         )}
+        <FavoriteButton
+          productId={id}
+          size="small"
+          className={styles.favoriteButton}
+        />
       </div>
       
       <div className={styles.content}>

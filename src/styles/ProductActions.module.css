@@ -1,0 +1,34 @@
+.actions {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  margin-top: 16px;
+}
+
+.actions > :first-child {
+  flex: 1;
+}
+
+.favoriteButton {
+  flex-shrink: 0;
+}
+
+/* Tablet */
+@media (max-width: 768px) {
+  .actions {
+    gap: 10px;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .actions {
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .favoriteButton {
+    width: 100%;
+    justify-content: center;
+  }
+}

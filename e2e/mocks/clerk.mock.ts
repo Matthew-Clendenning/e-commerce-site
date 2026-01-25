@@ -15,7 +15,7 @@
  * 3. The app's test mode checks for these test cookies and bypasses real auth
  */
 
-import { Page, BrowserContext } from '@playwright/test'
+import type { Page, BrowserContext } from '@playwright/test'
 
 /**
  * Mock User Interface

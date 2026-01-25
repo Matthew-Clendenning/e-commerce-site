@@ -1,9 +1,10 @@
-import { Metadata } from 'next'
+import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
-import AddToCartButton from '@/components/AddToCartButton'
+import ProductActions from '@/components/ProductActions'
+import ProductViewTracker from '@/components/ProductViewTracker'
 import styles from '../../../styles/product.module.css'
 
 type Props = {
@@ -103,6 +104,7 @@ export default async function ProductPage({ params }: Props) {
 
     return (
         <>
+            <ProductViewTracker productId={product.id} />
             <script
                 type="application/ld+json"
                 dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
@@ -160,7 +162,7 @@ export default async function ProductPage({ params }: Props) {
                             <p>{product.description || 'No description available.'}</p>
                         </div>
 
-                        <AddToCartButton 
+                        <ProductActions
                             product={{
                                 id: product.id,
                                 name: product.name,
@@ -169,7 +171,6 @@ export default async function ProductPage({ params }: Props) {
                                 slug: product.slug,
                                 stock: product.stock
                             }}
-                            disabled={product.stock === 0}
                         />
 
                         <div className={styles.features}>

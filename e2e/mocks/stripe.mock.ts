@@ -19,7 +19,7 @@
  * use Stripe's test mode with test card numbers. Don't use these mocks.
  */
 
-import { Page, Route } from '@playwright/test'
+import type { Page, Route } from '@playwright/test'
 
 /**
  * Mock Stripe Session Response

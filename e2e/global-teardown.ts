@@ -15,7 +15,7 @@
  */
 
 /* eslint-disable @typescript-eslint/no-unused-vars */
-import { FullConfig } from '@playwright/test'
+import type { FullConfig } from '@playwright/test'
 import dotenv from 'dotenv'
 
 // Load environment variables (global teardown runs in separate process)

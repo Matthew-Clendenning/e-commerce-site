@@ -10,7 +10,8 @@
  * - Breadcrumb navigation
  */
 
-import { Page, Locator, expect } from '@playwright/test'
+import type { Page, Locator } from '@playwright/test'
+import { expect } from '@playwright/test'
 import { BasePage } from './base.page'
 
 export class ProductDetailPage extends BasePage {

@@ -151,3 +151,38 @@ export function getIdentifier(
   // Fallback for local development
   return 'ip:127.0.0.1'
 }
+
+/**
+ * Check if a Stripe webhook event has already been processed (idempotency)
+ * @param eventId - Stripe event ID
+ * @returns true if event was already processed, false if new
+ */
+export async function isWebhookEventProcessed(eventId: string): Promise<boolean> {
+  if (!redis) {
+    // If Redis is not configured, we can't check idempotency
+    // Log a warning but allow processing (better than failing)
+    console.warn('Redis not configured - webhook idempotency check skipped')
+    return false
+  }
+
+  const key = `webhook:processed:${eventId}`
+  const exists = await redis.exists(key)
+  return exists === 1
+}
+
+/**
+ * Mark a Stripe webhook event as processed
+ * @param eventId - Stripe event ID
+ * @param ttlSeconds - Time to live in seconds (default 24 hours)
+ */
+export async function markWebhookEventProcessed(
+  eventId: string,
+  ttlSeconds: number = 86400 // 24 hours
+): Promise<void> {
+  if (!redis) {
+    return
+  }
+
+  const key = `webhook:processed:${eventId}`
+  await redis.set(key, Date.now().toString(), { ex: ttlSeconds })
+}

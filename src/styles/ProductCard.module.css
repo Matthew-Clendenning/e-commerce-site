@@ -58,6 +58,19 @@
   letter-spacing: 1px;
 }
 
+.favoriteButton {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 2;
+}
+
+.card:hover .favoriteButton {
+  opacity: 1;
+}
+
 .content {
   padding: 20px;
   display: flex;

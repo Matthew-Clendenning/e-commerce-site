@@ -73,6 +73,11 @@
   gap: 16px;
 }
 
+.desktopAuth {
+  display: flex;
+  align-items: center;
+}
+
 .signInButton {
   background: transparent;
   border: none;
@@ -98,6 +103,7 @@
   padding: 8px;
   color: var(--color-charcoal);
   transition: color 0.2s ease;
+  order: -1;
 }
 
 .mobileMenuButton:hover {
@@ -132,6 +138,86 @@
   color: var(--color-gold);
 }
 
+/* Mobile Dropdown Trigger */
+.mobileDropdownTrigger {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-charcoal);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.mobileDropdownTrigger:hover {
+  background: var(--color-cream);
+  color: var(--color-gold);
+}
+
+.mobileDropdownTrigger[aria-expanded="true"] {
+  background: var(--color-cream);
+}
+
+/* Mobile Dropdown Content */
+.mobileDropdownContent {
+  background: var(--color-cream);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.mobileSubLink {
+  display: block;
+  padding: 14px 24px 14px 48px;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--color-charcoal-light);
+  text-decoration: none;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid var(--color-border);
+  transition: all 0.2s ease;
+}
+
+.mobileSubLink:last-child {
+  border-bottom: none;
+}
+
+.mobileSubLink:hover {
+  background: rgba(201, 169, 98, 0.1);
+  color: var(--color-gold);
+}
+
+/* Mobile Login/Logout */
+.mobileLogin,
+.mobileLogout {
+  display: block;
+  width: 100%;
+  padding: 16px 24px;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--color-charcoal);
+  text-transform: uppercase;
+  letter-spacing: 1.5px;
+  border: none;
+  border-bottom: 1px solid var(--color-border);
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+  transition: all 0.2s ease;
+}
+
+.mobileLogin:hover,
+.mobileLogout:hover {
+  background: var(--color-cream);
+  color: var(--color-gold);
+}
+
 .mobileSignIn {
   display: block;
   width: calc(100% - 48px);
@@ -161,6 +247,9 @@
 
   .logo {
     font-size: 22px;
+    position: absolute;
+    left: 50%;
+    transform: translateX(-50%);
   }
 
   /* Hide desktop links */
@@ -170,6 +259,12 @@
 
   .auth {
     gap: 12px;
+    margin-left: auto;
+  }
+
+  /* Hide profile/sign-in on mobile */
+  .desktopAuth {
+    display: none;
   }
 
   .signInButton {
@@ -261,9 +356,17 @@
     max-height: calc(100vh - 56px);
   }
 
-  .mobileLink {
+  .mobileLink,
+  .mobileDropdownTrigger,
+  .mobileLogin,
+  .mobileLogout {
     padding: 14px 20px;
     font-size: 13px;
+  }
+
+  .mobileSubLink {
+    padding: 12px 20px 12px 40px;
+    font-size: 12px;
   }
 
   .mobileSignIn {

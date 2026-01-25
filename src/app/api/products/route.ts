@@ -1,7 +1,7 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 import { requireAdmin } from '@/lib/auth'
-import { Product, Category } from '@prisma/client'
+import type { Product, Category } from '@prisma/client'
 import {
   validatePrice,
   validateStock,

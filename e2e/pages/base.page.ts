@@ -18,7 +18,8 @@
  * - Assertions: Common checks specific to the page
  */
 
-import { Page, Locator, expect } from '@playwright/test'
+import type { Page, Locator } from '@playwright/test'
+import { expect } from '@playwright/test'
 
 /**
  * Base Page Class

@@ -423,6 +423,164 @@
   padding: 20px 0;
 }
 
+/* Tracking Section */
+.trackingSection {
+  margin-bottom: 20px;
+  padding: 20px;
+  background: var(--color-cream);
+  border: 1px solid var(--color-border);
+}
+
+/* Timeline */
+.timeline {
+  display: flex;
+  justify-content: space-between;
+  position: relative;
+  margin-bottom: 16px;
+}
+
+.timelineStep {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+  position: relative;
+}
+
+.timelineIcon {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--color-cream-light);
+  border: 2px solid var(--color-border);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-charcoal-light);
+  z-index: 1;
+  transition: all 0.2s ease;
+}
+
+.timelineStep.completed .timelineIcon {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-charcoal);
+}
+
+.timelineStep.current .timelineIcon {
+  background: var(--color-gold);
+  border-color: var(--color-gold);
+  color: var(--color-charcoal);
+  box-shadow: 0 0 0 4px rgba(201, 169, 98, 0.2);
+}
+
+.timelineContent {
+  text-align: center;
+  margin-top: 8px;
+}
+
+.timelineLabel {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-charcoal-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.timelineStep.completed .timelineLabel,
+.timelineStep.current .timelineLabel {
+  color: var(--color-charcoal);
+}
+
+.timelineDate {
+  display: block;
+  font-size: 10px;
+  color: var(--color-charcoal-light);
+  margin-top: 2px;
+}
+
+.timelineConnector {
+  position: absolute;
+  top: 18px;
+  left: calc(50% + 18px);
+  width: calc(100% - 36px);
+  height: 2px;
+  background: var(--color-border);
+}
+
+.timelineStep.completed .timelineConnector {
+  background: var(--color-gold);
+}
+
+/* Tracking Info */
+.trackingInfo {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--color-border);
+  flex-wrap: wrap;
+}
+
+.trackingLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-charcoal-light);
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.trackingNumber {
+  font-family: monospace;
+  font-size: 14px;
+  color: var(--color-charcoal);
+  background: var(--color-cream-light);
+  padding: 4px 8px;
+  border: 1px solid var(--color-border);
+}
+
+.trackButton {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
+  background: var(--color-gold);
+  color: var(--color-charcoal);
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  transition: all 0.2s ease;
+  margin-left: auto;
+}
+
+.trackButton:hover {
+  background: var(--color-gold-dark);
+}
+
+/* Toggle Items Button */
+.toggleItems {
+  width: 100%;
+  padding: 12px;
+  background: transparent;
+  border: 1px solid var(--color-border);
+  color: var(--color-charcoal-light);
+  font-size: 13px;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  cursor: pointer;
+  margin-bottom: 16px;
+  transition: all 0.2s ease;
+}
+
+.toggleItems:hover {
+  background: var(--color-cream);
+  color: var(--color-charcoal);
+}
+
 /* Shipping Info */
 .shippingInfo {
   display: flex;
@@ -623,6 +781,26 @@
     flex-direction: column;
     gap: 8px;
   }
+
+  .timeline {
+    gap: 8px;
+  }
+
+  .timelineLabel {
+    font-size: 10px;
+  }
+
+  .trackingInfo {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .trackButton {
+    margin-left: 0;
+    width: 100%;
+    justify-content: center;
+  }
 }
 
 @media (max-width: 480px) {
@@ -651,6 +829,48 @@
 
   .lookupSubmitButton {
     padding: 14px;
+    font-size: 12px;
+  }
+
+  .trackingSection {
+    padding: 16px;
+  }
+
+  .timelineIcon {
+    width: 28px;
+    height: 28px;
+  }
+
+  .timelineIcon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .timelineConnector {
+    top: 14px;
+    left: calc(50% + 14px);
+    width: calc(100% - 28px);
+  }
+
+  .timelineLabel {
+    font-size: 9px;
+  }
+
+  .timelineDate {
+    font-size: 9px;
+  }
+
+  .trackingNumber {
+    font-size: 12px;
+  }
+
+  .trackButton {
+    padding: 10px 14px;
+    font-size: 11px;
+  }
+
+  .toggleItems {
+    padding: 10px;
     font-size: 12px;
   }
 }

@@ -15,6 +15,10 @@ function formatOrder(order: {
   createdAt: Date
   updatedAt: Date
   isGuest: boolean
+  trackingNumber: string | null
+  shippingCarrier: string | null
+  shippedAt: Date | null
+  deliveredAt: Date | null
   items: Array<{
     id: string
     productId: string
@@ -34,6 +38,10 @@ function formatOrder(order: {
     createdAt: order.createdAt,
     updatedAt: order.updatedAt,
     isGuest: order.isGuest,
+    trackingNumber: order.trackingNumber,
+    shippingCarrier: order.shippingCarrier,
+    shippedAt: order.shippedAt,
+    deliveredAt: order.deliveredAt,
     items: order.items.map(item => ({
       id: item.id,
       productId: item.productId,

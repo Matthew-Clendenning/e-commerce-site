@@ -1,0 +1,121 @@
+.button {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background: var(--color-cream-light);
+  border: 1px solid var(--color-border);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: var(--color-charcoal-light);
+}
+
+.button:hover:not(:disabled) {
+  border-color: var(--color-gold);
+  color: var(--color-gold);
+  transform: scale(1.05);
+}
+
+.button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.button.favorited {
+  color: #e63946;
+  border-color: #e63946;
+  background: rgba(230, 57, 70, 0.05);
+}
+
+.button.favorited:hover:not(:disabled) {
+  background: rgba(230, 57, 70, 0.1);
+  color: #e63946;
+  border-color: #e63946;
+}
+
+.button.loading {
+  opacity: 0.7;
+  pointer-events: none;
+}
+
+.button.loading .icon {
+  animation: pulse 0.6s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(0.9);
+  }
+}
+
+/* Size variants */
+.small {
+  width: 28px;
+  height: 28px;
+  padding: 0;
+}
+
+.medium {
+  width: 36px;
+  height: 36px;
+  padding: 0;
+}
+
+.large {
+  width: 44px;
+  height: 44px;
+  padding: 0;
+}
+
+/* With label - make it pill shaped */
+.button:has(.label) {
+  border-radius: 50px;
+  padding: 8px 16px;
+  width: auto;
+  height: auto;
+}
+
+.small:has(.label) {
+  padding: 6px 12px;
+}
+
+.large:has(.label) {
+  padding: 10px 20px;
+}
+
+.icon {
+  flex-shrink: 0;
+  transition: transform 0.15s ease;
+}
+
+.label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.small .label {
+  font-size: 11px;
+}
+
+.large .label {
+  font-size: 13px;
+}
+
+/* Mobile */
+@media (max-width: 768px) {
+  .medium {
+    width: 32px;
+    height: 32px;
+  }
+
+  .large {
+    width: 40px;
+    height: 40px;
+  }
+}

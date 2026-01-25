@@ -5,6 +5,8 @@ import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { SignInButton } from '@clerk/nextjs'
+import { Package, Truck, CheckCircle, Clock, ExternalLink } from 'lucide-react'
+import { getTrackingUrl, getCarrierName, getStatusSteps } from '@/lib/tracking'
 import styles from '../../../styles/orders.module.css'
 
 type OrderItem = {
@@ -28,6 +30,8 @@ type ShippingAddress = {
   name?: string
 }
 
+type ShippingCarrier = 'USPS' | 'UPS' | 'FEDEX' | 'DHL' | 'OTHER' | null
+
 type Order = {
   id: string
   status: string
@@ -37,6 +41,10 @@ type Order = {
   shippingAddress: ShippingAddress | null
   createdAt: string
   items: OrderItem[]
+  trackingNumber: string | null
+  shippingCarrier: ShippingCarrier
+  shippedAt: string | null
+  deliveredAt: string | null
 }
 
 function LookupContent() {
@@ -197,6 +205,60 @@ function LookupContent() {
                   <span className={styles.total}>${order.total.toFixed(2)}</span>
                 </div>
               </div>
+
+              {/* Tracking Timeline */}
+              {order.status !== 'CANCELLED' && (
+                <div className={styles.trackingSection}>
+                  <div className={styles.timeline}>
+                    {getStatusSteps(order.status).map((step, index) => (
+                      <div
+                        key={step.key}
+                        className={`${styles.timelineStep} ${step.completed ? styles.completed : ''} ${step.current ? styles.current : ''}`}
+                      >
+                        <div className={styles.timelineIcon}>
+                          {step.key === 'PENDING' && <Clock size={16} />}
+                          {step.key === 'PROCESSING' && <Package size={16} />}
+                          {step.key === 'SHIPPED' && <Truck size={16} />}
+                          {step.key === 'DELIVERED' && <CheckCircle size={16} />}
+                        </div>
+                        <div className={styles.timelineContent}>
+                          <span className={styles.timelineLabel}>{step.label}</span>
+                          {step.current && (
+                            <span className={styles.timelineDate}>
+                              {step.key === 'SHIPPED' && order.shippedAt
+                                ? new Date(order.shippedAt).toLocaleDateString()
+                                : step.key === 'DELIVERED' && order.deliveredAt
+                                ? new Date(order.deliveredAt).toLocaleDateString()
+                                : ''}
+                            </span>
+                          )}
+                        </div>
+                        {index < 3 && <div className={styles.timelineConnector} />}
+                      </div>
+                    ))}
+                  </div>
+
+                  {/* Tracking Number */}
+                  {order.trackingNumber && (
+                    <div className={styles.trackingInfo}>
+                      <span className={styles.trackingLabel}>
+                        Tracking ({getCarrierName(order.shippingCarrier)}):
+                      </span>
+                      <span className={styles.trackingNumber}>{order.trackingNumber}</span>
+                      {getTrackingUrl(order.shippingCarrier, order.trackingNumber) && (
+                        <a
+                          href={getTrackingUrl(order.shippingCarrier, order.trackingNumber)!}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className={styles.trackButton}
+                        >
+                          Track Package <ExternalLink size={14} />
+                        </a>
+                      )}
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Shipping Address */}
               {order.shippingAddress?.address && (

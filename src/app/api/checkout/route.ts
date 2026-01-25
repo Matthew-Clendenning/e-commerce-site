@@ -4,7 +4,7 @@ import { stripe } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit, getIdentifier } from '@/lib/ratelimit'
 import { validateEmail, validateGuestCartItems, validateGuestName } from '@/lib/validation'
-import { Product } from '@prisma/client'
+import type { Product } from '@prisma/client'
 
 // Type for cart items with product data
 type CartItemWithProduct = {

@@ -14,7 +14,7 @@
  * - Makes tests deterministic and reproducible
  */
 
-import { FullConfig } from '@playwright/test'
+import type { FullConfig } from '@playwright/test'
 import dotenv from 'dotenv'
 
 // Load environment variables (global setup runs in separate process)

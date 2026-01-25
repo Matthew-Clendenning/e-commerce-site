@@ -26,9 +26,11 @@
 
 /* eslint-disable react-hooks/rules-of-hooks */
 import { test as base, expect } from '@playwright/test'
-import { mockClerkAuth, setupLocalStorageAuth, TEST_USERS, MockUser } from '../mocks/clerk.mock'
+import type { MockUser } from '../mocks/clerk.mock'
+import { mockClerkAuth, setupLocalStorageAuth, TEST_USERS } from '../mocks/clerk.mock'
 import { setupStripeTestMode } from '../mocks/stripe.mock'
-import { seedTestData, TestData } from '../utils/test-database'
+import type { TestData } from '../utils/test-database'
+import { seedTestData } from '../utils/test-database'
 
 // Import page objects (we'll create these next)
 // import { HomePage } from '../pages/home.page'

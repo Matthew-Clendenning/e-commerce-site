@@ -4,6 +4,8 @@ import Stripe from 'stripe'
 import { stripe } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
+import { sendOrderConfirmationEmail } from '@/lib/email'
+import { isWebhookEventProcessed, markWebhookEventProcessed } from '@/lib/ratelimit'
 
 // IMPORTANT: This disables Next.js body parsing so we can verify the webhook signature
 export const runtime = 'nodejs'
@@ -34,6 +36,13 @@ export async function POST(request: Request) {
       { error: 'Invalid signature' },
       { status: 400 }
     )
+  }
+
+  // Idempotency check - prevent duplicate event processing
+  const alreadyProcessed = await isWebhookEventProcessed(event.id)
+  if (alreadyProcessed) {
+    console.log(`Webhook event ${event.id} already processed, skipping`)
+    return NextResponse.json({ received: true, duplicate: true })
   }
 
   // Handle the event
@@ -108,6 +117,32 @@ export async function POST(request: Request) {
           })
         }
 
+        // Send order confirmation email
+        const shippingDetails = session.collected_information?.shipping_details
+        const shippingAddress = shippingDetails?.address ? {
+          name: shippingDetails.name || undefined,
+          line1: shippingDetails.address.line1 || undefined,
+          line2: shippingDetails.address.line2 || undefined,
+          city: shippingDetails.address.city || undefined,
+          state: shippingDetails.address.state || undefined,
+          postalCode: shippingDetails.address.postal_code || undefined,
+          country: shippingDetails.address.country || undefined,
+        } : undefined
+
+        await sendOrderConfirmationEmail({
+          orderId: order.id,
+          customerEmail: order.customerEmail,
+          customerName: order.customerName,
+          items: order.items.map(item => ({
+            name: item.name,
+            quantity: item.quantity,
+            price: Number(item.price),
+            imageUrl: item.imageUrl,
+          })),
+          total: Number(order.total),
+          shippingAddress,
+        })
+
         break
       }
 
@@ -157,6 +192,9 @@ export async function POST(request: Request) {
         // Unhandled event type - ignored
         break
     }
+
+    // Mark event as processed to prevent duplicate handling
+    await markWebhookEventProcessed(event.id)
 
     return NextResponse.json({ received: true })
   } catch {
