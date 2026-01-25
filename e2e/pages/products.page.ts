@@ -115,7 +115,9 @@ export class ProductsPage extends BasePage {
    */
   async clickProduct(productName: string): Promise<void> {
     const card = this.productCards.filter({ hasText: productName })
-    await card.click()
+    // Click on the title to avoid hitting the FavoriteButton overlay
+    const title = card.locator('h3[class*="title"]')
+    await title.click()
     await this.page.waitForURL(/\/products\/.+/)
   }
 
@@ -139,11 +141,13 @@ export class ProductsPage extends BasePage {
    * @param categoryName - Display name of the category
    */
   async filterByCategory(categoryName: string): Promise<void> {
-    const filterButton = this.filterButtons.filter({ hasText: categoryName })
+    const filterButton = this.filterButtons.filter({ hasText: categoryName }).first()
+    // Ensure button is visible and ready
+    await expect(filterButton).toBeVisible()
     await filterButton.click()
 
-    // Wait for URL to update
-    await this.page.waitForURL(/category=|\/products$/)
+    // Wait for URL to include category parameter
+    await this.page.waitForURL(/\?category=/)
     await this.waitForPageLoad()
   }
 
@@ -152,7 +156,8 @@ export class ProductsPage extends BasePage {
    */
   async showAllProducts(): Promise<void> {
     await this.allProductsFilter.click()
-    await this.page.waitForURL('/products')
+    // Wait for URL to be /products without category param (use regex to match end of path)
+    await this.page.waitForURL(/\/products$/)
     await this.waitForPageLoad()
   }
 
