@@ -1,0 +1,148 @@
+.section {
+  background: var(--color-cream-light);
+  padding: 80px 20px;
+  border-top: 1px solid var(--color-border);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.container {
+  max-width: 1200px;
+  margin: 0 auto;
+}
+
+.header {
+  text-align: center;
+  max-width: 700px;
+  margin: 0 auto 60px;
+}
+
+.subtitle {
+  display: block;
+  font-size: 12px;
+  color: var(--color-gold);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 3px;
+  margin-bottom: 16px;
+}
+
+.title {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: 48px;
+  font-weight: 400;
+  color: var(--color-charcoal);
+  margin: 0 0 24px;
+  line-height: 1.2;
+}
+
+.description {
+  font-size: 17px;
+  color: var(--color-charcoal-light);
+  line-height: 1.8;
+  margin: 0;
+}
+
+.valuesGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 40px;
+}
+
+.valueCard {
+  text-align: center;
+  padding: 32px;
+  background: var(--color-cream);
+  border: 1px solid var(--color-border);
+  transition: all 0.3s ease;
+}
+
+.valueCard:hover {
+  border-color: var(--color-gold);
+}
+
+.valueTitle {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--color-charcoal);
+  margin: 0 0 16px;
+}
+
+.valueDescription {
+  font-size: 15px;
+  color: var(--color-charcoal-light);
+  line-height: 1.7;
+  margin: 0;
+}
+
+/* Tablet */
+@media (max-width: 900px) {
+  .valuesGrid {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .valueCard {
+    padding: 24px;
+  }
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 60px 20px;
+  }
+
+  .header {
+    margin-bottom: 40px;
+  }
+
+  .title {
+    font-size: 36px;
+  }
+
+  .description {
+    font-size: 15px;
+  }
+
+  .valueTitle {
+    font-size: 20px;
+  }
+
+  .valueDescription {
+    font-size: 14px;
+  }
+}
+
+/* Small Mobile */
+@media (max-width: 480px) {
+  .section {
+    padding: 48px 16px;
+  }
+
+  .subtitle {
+    font-size: 11px;
+    letter-spacing: 2px;
+  }
+
+  .title {
+    font-size: 28px;
+  }
+
+  .description {
+    font-size: 14px;
+    line-height: 1.7;
+  }
+
+  .valueCard {
+    padding: 20px;
+  }
+
+  .valueTitle {
+    font-size: 18px;
+    margin-bottom: 12px;
+  }
+
+  .valueDescription {
+    font-size: 13px;
+  }
+}

@@ -1,5 +1,5 @@
 .container {
-  max-width: 1400px;
+  max-width: 1300px;
   margin: 0 auto;
   padding: 40px 20px;
 }
@@ -27,7 +27,7 @@
 
 .productGrid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 0.5fr 0.7fr;
   gap: 80px;
   margin-top: 32px;
 }
@@ -63,6 +63,12 @@
   gap: 24px;
 }
 
+.categoryRow {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
 .category {
   font-size: 12px;
   color: var(--color-gold);
@@ -81,11 +87,41 @@
   letter-spacing: 1px;
 }
 
+.priceSection {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 12px;
+}
+
 .price {
   font-family: var(--font-heading), Georgia, serif;
   font-size: 36px;
   font-weight: 500;
   color: var(--color-charcoal);
+}
+
+.originalPrice {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: 24px;
+  font-weight: 400;
+  color: var(--color-charcoal-light);
+  text-decoration: line-through;
+}
+
+.salePrice {
+  font-family: var(--font-heading), Georgia, serif;
+  font-size: 36px;
+  font-weight: 500;
+  color: var(--color-danger);
+}
+
+.savings {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--color-success);
+  text-transform: uppercase;
+  letter-spacing: 1px;
 }
 
 .stock {
@@ -219,6 +255,18 @@
     font-size: 28px;
   }
 
+  .originalPrice {
+    font-size: 20px;
+  }
+
+  .salePrice {
+    font-size: 28px;
+  }
+
+  .savings {
+    font-size: 13px;
+  }
+
   .description h2 {
     font-size: 18px;
   }
@@ -279,6 +327,23 @@
 
   .price {
     font-size: 24px;
+  }
+
+  .originalPrice {
+    font-size: 18px;
+  }
+
+  .salePrice {
+    font-size: 24px;
+  }
+
+  .priceSection {
+    gap: 8px;
+  }
+
+  .savings {
+    width: 100%;
+    font-size: 12px;
   }
 
   .stock {

@@ -1,0 +1,45 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-danger);
+  color: #fff;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  white-space: nowrap;
+}
+
+.small {
+  padding: 4px 8px;
+  font-size: 10px;
+  letter-spacing: 0.3px;
+}
+
+.medium {
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+.large {
+  padding: 8px 16px;
+  font-size: 14px;
+  letter-spacing: 1px;
+}
+
+@media (max-width: 768px) {
+  .small {
+    padding: 3px 6px;
+    font-size: 9px;
+  }
+
+  .medium {
+    padding: 5px 10px;
+    font-size: 11px;
+  }
+
+  .large {
+    padding: 6px 12px;
+    font-size: 12px;
+  }
+}

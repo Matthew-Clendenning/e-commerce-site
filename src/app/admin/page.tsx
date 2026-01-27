@@ -7,6 +7,7 @@ import Image from 'next/image'
 import { toast } from 'sonner'
 import styles from '../../styles/admin.module.css'
 import ConfirmModal from '../../components/ConfirmModal'
+import ProductImageManager from '../../components/ProductImageManager'
 
 type Order = {
   id: string
@@ -31,6 +32,13 @@ type Order = {
   }>
 }
 
+type ProductImage = {
+  id: string
+  url: string
+  alt: string | null
+  position: number
+}
+
 type Product = {
   id: string
   name: string
@@ -44,6 +52,7 @@ type Product = {
     name: string
     slug: string
   }
+  images?: ProductImage[]
 }
 
 type Category = {
@@ -56,7 +65,27 @@ type Category = {
   }
 }
 
-type TabType = 'products' | 'categories' | 'orders'
+type Sale = {
+  id: string
+  name: string
+  tagline: string
+  discount: number
+  startDate: string
+  endDate: string
+  isActive: boolean
+  bannerUrl: string | null
+  categories: Array<{
+    id: string
+    categoryId: string
+    category: {
+      id: string
+      name: string
+      slug: string
+    }
+  }>
+}
+
+type TabType = 'products' | 'categories' | 'orders' | 'sales'
 
 export default function AdminPage() {
   const { user, isLoaded } = useUser()
@@ -111,6 +140,40 @@ export default function AdminPage() {
     productCount: number
   }>({ isOpen: false, categoryId: '', categoryName: '', productCount: 0 })
 
+  // Image management state
+  const [imageModalProduct, setImageModalProduct] = useState<Product | null>(null)
+  const [productImages, setProductImages] = useState<ProductImage[]>([])
+
+  // Sales management state
+  const [sales, setSales] = useState<Sale[]>([])
+  const [showCreateSaleForm, setShowCreateSaleForm] = useState(false)
+  const [createSaleForm, setCreateSaleForm] = useState({
+    name: '',
+    tagline: '',
+    discount: '',
+    startDate: '',
+    endDate: '',
+    bannerUrl: '',
+    categoryIds: [] as string[]
+  })
+  const [showEditSaleModal, setShowEditSaleModal] = useState(false)
+  const [editingSaleId, setEditingSaleId] = useState<string | null>(null)
+  const [editSaleForm, setEditSaleForm] = useState({
+    name: '',
+    tagline: '',
+    discount: '',
+    startDate: '',
+    endDate: '',
+    isActive: true,
+    bannerUrl: '',
+    categoryIds: [] as string[]
+  })
+  const [deleteSaleConfirm, setDeleteSaleConfirm] = useState<{
+    isOpen: boolean
+    saleId: string
+    saleName: string
+  }>({ isOpen: false, saleId: '', saleName: '' })
+
   // Check admin access
   useEffect(() => {
     if (isLoaded && !user) {
@@ -130,6 +193,7 @@ export default function AdminPage() {
       fetchProducts()
       fetchCategories()
       fetchOrders()
+      fetchSales()
     }
   }, [isLoaded, user])
 
@@ -212,6 +276,194 @@ export default function AdminPage() {
     } catch {
       // Error fetching categories
     }
+  }
+
+  const fetchSales = async () => {
+    try {
+      const response = await fetch('/api/sales')
+      const data = await response.json()
+      setSales(data)
+    } catch {
+      // Error fetching sales
+    }
+  }
+
+  const createSale = async () => {
+    if (!createSaleForm.name || !createSaleForm.discount || !createSaleForm.endDate || createSaleForm.categoryIds.length === 0) {
+      toast.warning('Please fill in all required fields (Name, Discount, End Date, Categories)')
+      return
+    }
+
+    setSaving(true)
+    try {
+      const response = await fetch('/api/sales', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: createSaleForm.name,
+          tagline: createSaleForm.tagline || '',
+          discount: parseInt(createSaleForm.discount),
+          startDate: createSaleForm.startDate || new Date().toISOString(),
+          endDate: new Date(createSaleForm.endDate).toISOString(),
+          bannerUrl: createSaleForm.bannerUrl || null,
+          categoryIds: createSaleForm.categoryIds
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to create sale')
+      }
+
+      await fetchSales()
+      setShowCreateSaleForm(false)
+      setCreateSaleForm({
+        name: '',
+        tagline: '',
+        discount: '',
+        startDate: '',
+        endDate: '',
+        bannerUrl: '',
+        categoryIds: []
+      })
+      toast.success('Sale created successfully!')
+    } catch (error) {
+      toast.error(`Failed to create sale: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const startEditSale = (sale: Sale) => {
+    setEditingSaleId(sale.id)
+    setEditSaleForm({
+      name: sale.name,
+      tagline: sale.tagline,
+      discount: sale.discount.toString(),
+      startDate: sale.startDate.slice(0, 16),
+      endDate: sale.endDate.slice(0, 16),
+      isActive: sale.isActive,
+      bannerUrl: sale.bannerUrl || '',
+      categoryIds: sale.categories.map(c => c.categoryId)
+    })
+    setShowEditSaleModal(true)
+  }
+
+  const cancelEditSale = () => {
+    setEditingSaleId(null)
+    setShowEditSaleModal(false)
+    setEditSaleForm({
+      name: '',
+      tagline: '',
+      discount: '',
+      startDate: '',
+      endDate: '',
+      isActive: true,
+      bannerUrl: '',
+      categoryIds: []
+    })
+  }
+
+  const saveEditSale = async (saleId: string) => {
+    if (!editSaleForm.name || !editSaleForm.discount || !editSaleForm.endDate) {
+      toast.warning('Please fill in all required fields')
+      return
+    }
+
+    setSaving(true)
+    try {
+      const response = await fetch(`/api/sales/${saleId}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: editSaleForm.name,
+          tagline: editSaleForm.tagline,
+          discount: parseInt(editSaleForm.discount),
+          startDate: new Date(editSaleForm.startDate).toISOString(),
+          endDate: new Date(editSaleForm.endDate).toISOString(),
+          isActive: editSaleForm.isActive,
+          bannerUrl: editSaleForm.bannerUrl || null,
+          categoryIds: editSaleForm.categoryIds
+        })
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to update sale')
+      }
+
+      await fetchSales()
+      cancelEditSale()
+      toast.success('Sale updated successfully!')
+    } catch (error) {
+      toast.error(`Failed to update sale: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const openDeleteSaleConfirm = (saleId: string, saleName: string) => {
+    setDeleteSaleConfirm({ isOpen: true, saleId, saleName })
+  }
+
+  const closeDeleteSaleConfirm = () => {
+    setDeleteSaleConfirm({ isOpen: false, saleId: '', saleName: '' })
+  }
+
+  const confirmDeleteSale = async () => {
+    const { saleId } = deleteSaleConfirm
+
+    setSaving(true)
+    try {
+      const response = await fetch(`/api/sales/${saleId}`, {
+        method: 'DELETE'
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete sale')
+      }
+
+      closeDeleteSaleConfirm()
+      await fetchSales()
+      toast.success('Sale deleted successfully!')
+    } catch (error) {
+      toast.error(`Failed to delete sale: ${error instanceof Error ? error.message : 'Unknown error'}`)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const toggleSaleCategory = (categoryId: string, isCreate: boolean) => {
+    if (isCreate) {
+      setCreateSaleForm(prev => ({
+        ...prev,
+        categoryIds: prev.categoryIds.includes(categoryId)
+          ? prev.categoryIds.filter(id => id !== categoryId)
+          : [...prev.categoryIds, categoryId]
+      }))
+    } else {
+      setEditSaleForm(prev => ({
+        ...prev,
+        categoryIds: prev.categoryIds.includes(categoryId)
+          ? prev.categoryIds.filter(id => id !== categoryId)
+          : [...prev.categoryIds, categoryId]
+      }))
+    }
+  }
+
+  const getSaleStatus = (sale: Sale) => {
+    const now = new Date()
+    const start = new Date(sale.startDate)
+    const end = new Date(sale.endDate)
+
+    if (!sale.isActive) return 'inactive'
+    if (now < start) return 'scheduled'
+    if (now > end) return 'expired'
+    return 'active'
   }
 
   const startEdit = (product: Product) => {
@@ -387,6 +639,28 @@ export default function AdminPage() {
     return 'good'
   }
 
+  // Fetch product images and open modal
+  const openImageModal = async (product: Product) => {
+    setImageModalProduct(product)
+    try {
+      const response = await fetch(`/api/products/${product.id}/images`)
+      const data = await response.json()
+      setProductImages(data)
+    } catch {
+      toast.error('Failed to load product images')
+      setProductImages([])
+    }
+  }
+
+  const closeImageModal = () => {
+    setImageModalProduct(null)
+    setProductImages([])
+  }
+
+  const handleImagesChange = (newImages: ProductImage[]) => {
+    setProductImages(newImages)
+  }
+
   // Category editing functions
   const startEditCategory = (category: Category) => {
     setEditingCategoryId(category.id)
@@ -508,6 +782,12 @@ export default function AdminPage() {
           onClick={() => setActiveTab('orders')}
         >
           Orders ({orders.length})
+        </button>
+        <button
+          className={activeTab === 'sales' ? styles.tabActive : styles.tab}
+          onClick={() => setActiveTab('sales')}
+        >
+          Sales ({sales.length})
         </button>
       </div>
 
@@ -741,14 +1021,14 @@ export default function AdminPage() {
                     <td>
                       {editingId === product.id ? (
                         <div className={styles.actions}>
-                          <button 
+                          <button
                             onClick={() => saveEdit(product.id)}
                             className={styles.saveButton}
                             disabled={saving}
                           >
                             {saving ? 'Saving...' : 'Save'}
                           </button>
-                          <button 
+                          <button
                             onClick={cancelEdit}
                             className={styles.cancelButton}
                             disabled={saving}
@@ -764,12 +1044,20 @@ export default function AdminPage() {
                           </button>
                         </div>
                       ) : (
-                        <button 
-                          onClick={() => startEdit(product)}
-                          className={styles.editButton}
-                        >
-                          Edit
-                        </button>
+                        <div className={styles.actions}>
+                          <button
+                            onClick={() => startEdit(product)}
+                            className={styles.editButton}
+                          >
+                            Edit
+                          </button>
+                          <button
+                            onClick={() => openImageModal(product)}
+                            className={styles.imagesButton}
+                          >
+                            Images
+                          </button>
+                        </div>
                       )}
                     </td>
                   </tr>
@@ -1129,6 +1417,333 @@ export default function AdminPage() {
         </>
       )}
 
+      {activeTab === 'sales' && (
+        <>
+          <div className={styles.sectionHeader}>
+            <h2>Sales Management</h2>
+            <button
+              onClick={() => setShowCreateSaleForm(true)}
+              className={styles.createButton}
+            >
+              + Create New Sale
+            </button>
+          </div>
+
+          {showCreateSaleForm && (
+            <div className={styles.modal}>
+              <div className={styles.modalContent} style={{ maxWidth: '600px' }}>
+                <div className={styles.modalHeader}>
+                  <h2>Create New Sale</h2>
+                  <button
+                    onClick={() => setShowCreateSaleForm(false)}
+                    className={styles.closeButton}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className={styles.form}>
+                  <div className={styles.formGroup}>
+                    <label>Sale Name *</label>
+                    <input
+                      type="text"
+                      value={createSaleForm.name}
+                      onChange={(e) => setCreateSaleForm({ ...createSaleForm, name: e.target.value })}
+                      placeholder="e.g., Winter Sale"
+                      className={styles.formInput}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Tagline</label>
+                    <input
+                      type="text"
+                      value={createSaleForm.tagline}
+                      onChange={(e) => setCreateSaleForm({ ...createSaleForm, tagline: e.target.value })}
+                      placeholder="e.g., THE TEXTURE & COLOR OF THE SEASON"
+                      className={styles.formInput}
+                    />
+                  </div>
+
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label>Discount (%) *</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={createSaleForm.discount}
+                        onChange={(e) => setCreateSaleForm({ ...createSaleForm, discount: e.target.value })}
+                        placeholder="25"
+                        className={styles.formInput}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>End Date *</label>
+                      <input
+                        type="datetime-local"
+                        value={createSaleForm.endDate}
+                        onChange={(e) => setCreateSaleForm({ ...createSaleForm, endDate: e.target.value })}
+                        className={styles.formInput}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Start Date (optional, defaults to now)</label>
+                    <input
+                      type="datetime-local"
+                      value={createSaleForm.startDate}
+                      onChange={(e) => setCreateSaleForm({ ...createSaleForm, startDate: e.target.value })}
+                      className={styles.formInput}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Banner Image URL (optional)</label>
+                    <input
+                      type="text"
+                      value={createSaleForm.bannerUrl}
+                      onChange={(e) => setCreateSaleForm({ ...createSaleForm, bannerUrl: e.target.value })}
+                      placeholder="https://..."
+                      className={styles.formInput}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Categories *</label>
+                    <div className={styles.categoryCheckboxes}>
+                      {categories.map((category) => (
+                        <label key={category.id} className={styles.checkboxLabel}>
+                          <input
+                            type="checkbox"
+                            checked={createSaleForm.categoryIds.includes(category.id)}
+                            onChange={() => toggleSaleCategory(category.id, true)}
+                          />
+                          {category.name}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={styles.formActions}>
+                    <button
+                      onClick={() => setShowCreateSaleForm(false)}
+                      className={styles.cancelButtonLarge}
+                      disabled={saving}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={createSale}
+                      className={styles.saveButtonLarge}
+                      disabled={saving}
+                    >
+                      {saving ? 'Creating...' : 'Create Sale'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <div className={styles.stats}>
+            <div className={styles.stat}>
+              <div className={styles.statValue}>{sales.length}</div>
+              <div className={styles.statLabel}>Total Sales</div>
+            </div>
+            <div className={styles.stat}>
+              <div className={styles.statValue}>
+                {sales.filter(s => getSaleStatus(s) === 'active').length}
+              </div>
+              <div className={styles.statLabel}>Active</div>
+            </div>
+            <div className={styles.stat}>
+              <div className={styles.statValue}>
+                {sales.filter(s => getSaleStatus(s) === 'scheduled').length}
+              </div>
+              <div className={styles.statLabel}>Scheduled</div>
+            </div>
+            <div className={styles.stat}>
+              <div className={styles.statValue}>
+                {sales.filter(s => getSaleStatus(s) === 'expired' || getSaleStatus(s) === 'inactive').length}
+              </div>
+              <div className={styles.statLabel}>Inactive/Expired</div>
+            </div>
+          </div>
+
+          <div className={styles.salesGrid}>
+            {sales.map((sale) => (
+              <div key={sale.id} className={styles.saleCard}>
+                <div className={styles.saleHeader}>
+                  <h3>{sale.name}</h3>
+                  <span className={`${styles.badge} ${styles[getSaleStatus(sale)]}`}>
+                    {getSaleStatus(sale).charAt(0).toUpperCase() + getSaleStatus(sale).slice(1)}
+                  </span>
+                </div>
+                <p className={styles.saleTagline}>{sale.tagline || 'No tagline'}</p>
+                <div className={styles.saleDiscount}>{sale.discount}% OFF</div>
+                <div className={styles.saleMeta}>
+                  <div>
+                    <strong>Start:</strong> {new Date(sale.startDate).toLocaleDateString()}
+                  </div>
+                  <div>
+                    <strong>End:</strong> {new Date(sale.endDate).toLocaleDateString()}
+                  </div>
+                </div>
+                <div className={styles.saleCategories}>
+                  <strong>Categories:</strong>{' '}
+                  {sale.categories.map(c => c.category.name).join(', ') || 'None'}
+                </div>
+                <div className={styles.actions} style={{ marginTop: '15px' }}>
+                  <button
+                    onClick={() => startEditSale(sale)}
+                    className={styles.editButton}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => openDeleteSaleConfirm(sale.id, sale.name)}
+                    className={styles.deleteButton}
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Edit Sale Modal */}
+          {showEditSaleModal && editingSaleId && (
+            <div className={styles.modal}>
+              <div className={styles.modalContent} style={{ maxWidth: '600px' }}>
+                <div className={styles.modalHeader}>
+                  <h2>Edit Sale</h2>
+                  <button
+                    onClick={cancelEditSale}
+                    className={styles.closeButton}
+                  >
+                    ✕
+                  </button>
+                </div>
+
+                <div className={styles.form}>
+                  <div className={styles.formGroup}>
+                    <label>Sale Name *</label>
+                    <input
+                      type="text"
+                      value={editSaleForm.name}
+                      onChange={(e) => setEditSaleForm({ ...editSaleForm, name: e.target.value })}
+                      className={styles.formInput}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Tagline</label>
+                    <input
+                      type="text"
+                      value={editSaleForm.tagline}
+                      onChange={(e) => setEditSaleForm({ ...editSaleForm, tagline: e.target.value })}
+                      className={styles.formInput}
+                    />
+                  </div>
+
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label>Discount (%) *</label>
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={editSaleForm.discount}
+                        onChange={(e) => setEditSaleForm({ ...editSaleForm, discount: e.target.value })}
+                        className={styles.formInput}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>Active</label>
+                      <select
+                        value={editSaleForm.isActive ? 'true' : 'false'}
+                        onChange={(e) => setEditSaleForm({ ...editSaleForm, isActive: e.target.value === 'true' })}
+                        className={styles.formSelect}
+                      >
+                        <option value="true">Yes</option>
+                        <option value="false">No</option>
+                      </select>
+                    </div>
+                  </div>
+
+                  <div className={styles.formRow}>
+                    <div className={styles.formGroup}>
+                      <label>Start Date</label>
+                      <input
+                        type="datetime-local"
+                        value={editSaleForm.startDate}
+                        onChange={(e) => setEditSaleForm({ ...editSaleForm, startDate: e.target.value })}
+                        className={styles.formInput}
+                      />
+                    </div>
+                    <div className={styles.formGroup}>
+                      <label>End Date *</label>
+                      <input
+                        type="datetime-local"
+                        value={editSaleForm.endDate}
+                        onChange={(e) => setEditSaleForm({ ...editSaleForm, endDate: e.target.value })}
+                        className={styles.formInput}
+                      />
+                    </div>
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Banner Image URL (optional)</label>
+                    <input
+                      type="text"
+                      value={editSaleForm.bannerUrl}
+                      onChange={(e) => setEditSaleForm({ ...editSaleForm, bannerUrl: e.target.value })}
+                      placeholder="https://..."
+                      className={styles.formInput}
+                    />
+                  </div>
+
+                  <div className={styles.formGroup}>
+                    <label>Categories *</label>
+                    <div className={styles.categoryCheckboxes}>
+                      {categories.map((category) => (
+                        <label key={category.id} className={styles.checkboxLabel}>
+                          <input
+                            type="checkbox"
+                            checked={editSaleForm.categoryIds.includes(category.id)}
+                            onChange={() => toggleSaleCategory(category.id, false)}
+                          />
+                          {category.name}
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className={styles.formActions}>
+                    <button
+                      onClick={cancelEditSale}
+                      className={styles.cancelButtonLarge}
+                      disabled={saving}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      onClick={() => saveEditSale(editingSaleId)}
+                      className={styles.saveButtonLarge}
+                      disabled={saving}
+                    >
+                      {saving ? 'Saving...' : 'Save Changes'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
       {/* Delete Product Confirmation Modal */}
       <ConfirmModal
         isOpen={deleteConfirm.isOpen}
@@ -1159,6 +1774,51 @@ export default function AdminPage() {
         isLoading={saving}
         hideConfirm={deleteCategoryConfirm.productCount > 0}
       />
+
+      {/* Delete Sale Confirmation Modal */}
+      <ConfirmModal
+        isOpen={deleteSaleConfirm.isOpen}
+        title="Delete Sale"
+        message={`Are you sure you want to delete "${deleteSaleConfirm.saleName}"? This action cannot be undone.`}
+        confirmText="Delete"
+        cancelText="Cancel"
+        variant="danger"
+        onConfirm={confirmDeleteSale}
+        onCancel={closeDeleteSaleConfirm}
+        isLoading={saving}
+      />
+
+      {/* Product Images Modal */}
+      {imageModalProduct && (
+        <div className={styles.modal}>
+          <div className={styles.modalContent} style={{ maxWidth: '600px' }}>
+            <div className={styles.modalHeader}>
+              <h2>Manage Images - {imageModalProduct.name}</h2>
+              <button
+                onClick={closeImageModal}
+                className={styles.closeButton}
+              >
+                ✕
+              </button>
+            </div>
+
+            <ProductImageManager
+              productId={imageModalProduct.id}
+              images={productImages}
+              onImagesChange={handleImagesChange}
+            />
+
+            <div className={styles.formActions} style={{ marginTop: '20px' }}>
+              <button
+                onClick={closeImageModal}
+                className={styles.saveButtonLarge}
+              >
+                Done
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

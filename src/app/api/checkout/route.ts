@@ -4,6 +4,7 @@ import { stripe } from '@/lib/stripe'
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit, getIdentifier } from '@/lib/ratelimit'
 import { validateEmail, validateGuestCartItems, validateGuestName } from '@/lib/validation'
+import { getCategoryDiscountMap, calculateEffectiveDiscount, calculateSalePrice } from '@/lib/sales'
 import type { Product } from '@prisma/client'
 
 // Type for cart items with product data
@@ -150,26 +151,51 @@ export async function POST(request: Request) {
       }
     }
 
-    // Create Stripe line items
-    const lineItems = cartItems.map(item => ({
-      price_data: {
-        currency: 'usd',
-        product_data: {
-          name: item.product.name,
-          description: item.product.description || undefined,
-          images: item.product.imageUrl ? [item.product.imageUrl] : undefined,
-        },
-        unit_amount: Math.round(Number(item.product.price) * 100), // Convert to cents
-      },
-      quantity: item.quantity,
-    }))
+    // Fetch active category discounts for applying to prices
+    const categoryDiscountMap = await getCategoryDiscountMap()
 
-    // Calculate total
+    // Create Stripe line items with discount prices applied
+    const lineItems = cartItems.map(item => {
+      const originalPrice = Number(item.product.price)
+      const categoryDiscount = categoryDiscountMap.get(item.product.categoryId) ?? 0
+      const productDiscount = item.product.discountPercent
+      const effectiveDiscount = calculateEffectiveDiscount(productDiscount, categoryDiscount)
+      const finalPrice = effectiveDiscount > 0
+        ? calculateSalePrice(originalPrice, effectiveDiscount)
+        : originalPrice
+
+      // Build product name with discount info if applicable
+      const productName = effectiveDiscount > 0
+        ? `${item.product.name} (${effectiveDiscount}% OFF)`
+        : item.product.name
+
+      return {
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: productName,
+            description: item.product.description || undefined,
+            images: item.product.imageUrl ? [item.product.imageUrl] : undefined,
+          },
+          unit_amount: Math.round(finalPrice * 100), // Convert to cents
+        },
+        quantity: item.quantity,
+      }
+    })
+
+    // Calculate total with discounts applied
     const total = cartItems.reduce((sum, item) => {
-      return sum + (Number(item.product.price) * item.quantity)
+      const originalPrice = Number(item.product.price)
+      const categoryDiscount = categoryDiscountMap.get(item.product.categoryId) ?? 0
+      const productDiscount = item.product.discountPercent
+      const effectiveDiscount = calculateEffectiveDiscount(productDiscount, categoryDiscount)
+      const finalPrice = effectiveDiscount > 0
+        ? calculateSalePrice(originalPrice, effectiveDiscount)
+        : originalPrice
+      return sum + (finalPrice * item.quantity)
     }, 0)
 
-    // Create pending order in database
+    // Create pending order in database (with discounted prices)
     const order = await prisma.order.create({
       data: {
         userId: isGuest ? null : userId,
@@ -179,13 +205,23 @@ export async function POST(request: Request) {
         total,
         status: 'PENDING',
         items: {
-          create: cartItems.map(item => ({
-            productId: item.product.id,
-            name: item.product.name,
-            price: item.product.price,
-            quantity: item.quantity,
-            imageUrl: item.product.imageUrl,
-          }))
+          create: cartItems.map(item => {
+            const originalPrice = Number(item.product.price)
+            const categoryDiscount = categoryDiscountMap.get(item.product.categoryId) ?? 0
+            const productDiscount = item.product.discountPercent
+            const effectiveDiscount = calculateEffectiveDiscount(productDiscount, categoryDiscount)
+            const finalPrice = effectiveDiscount > 0
+              ? calculateSalePrice(originalPrice, effectiveDiscount)
+              : originalPrice
+
+            return {
+              productId: item.product.id,
+              name: item.product.name,
+              price: finalPrice, // Store the discounted price
+              quantity: item.quantity,
+              imageUrl: item.product.imageUrl,
+            }
+          })
         }
       }
     })

@@ -1,5 +1,5 @@
 .container {
-  max-width: 1400px;
+  max-width: 1300px;
   margin: 0 auto;
   padding: 40px 20px;
 }
@@ -129,11 +129,11 @@
 }
 
 .formGroup label {
-  display: block;
   font-size: 14px;
   font-weight: 600;
   color: #374151;
   margin-bottom: 8px;
+  display: flex;
 }
 
 .formInput,
@@ -175,8 +175,9 @@
 .formActions {
   display: flex;
   gap: 12px;
-  margin-top: 24px;
-  padding-top: 24px;
+  padding: 24px;
+  margin-bottom: 12px;
+  padding-bottom: 10px;
   border-top: 1px solid #e5e7eb;
 }
 
@@ -495,6 +496,22 @@
   background: var(--color-gold-dark);
 }
 
+.imagesButton {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 6px;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  background: #303030;
+  color: white;
+}
+
+.imagesButton:hover {
+  background: var(--color-charcoal-light);
+}
+
 .saveButton {
   background: var(--color-success);
   color: white;
@@ -578,6 +595,142 @@
   color: #374151;
 }
 
+/* Sales styles */
+.salesGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 24px;
+}
+
+.saleCard {
+  background: white;
+  border: 2px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 24px;
+  transition: all 0.2s ease;
+}
+
+.saleCard:hover {
+  border-color: var(--color-primary);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 123, 255, 0.1);
+}
+
+/* Force form rows inside sale cards to stack vertically */
+.saleCard .formRow {
+  grid-template-columns: 1fr;
+}
+
+/* Ensure datetime inputs fit within card */
+.saleCard .formInput[type="datetime-local"] {
+  max-width: 100%;
+}
+
+.saleHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 12px;
+}
+
+.saleHeader h3 {
+  font-size: 20px;
+  font-weight: 700;
+  color: #111827;
+  margin: 0;
+}
+
+.saleTagline {
+  font-size: 14px;
+  color: #6b7280;
+  margin: 0 0 16px 0;
+  font-style: italic;
+}
+
+.saleDiscount {
+  display: inline-block;
+  background: var(--color-danger);
+  color: white;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 18px;
+  font-weight: 700;
+  margin-bottom: 16px;
+}
+
+.saleMeta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 13px;
+  color: #4b5563;
+  padding: 12px 0;
+  border-top: 1px solid #e5e7eb;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 12px;
+}
+
+.saleCategories {
+  font-size: 13px;
+  color: #6b7280;
+}
+
+/* Sale status badges */
+.active {
+  background: #d1fae5;
+  color: #065f46;
+}
+
+.scheduled {
+  background: #dbeafe;
+  color: #1e40af;
+}
+
+.expired {
+  background: #fee2e2;
+  color: #991b1b;
+}
+
+.inactive {
+  background: #f3f4f6;
+  color: #374151;
+}
+
+/* Category checkboxes */
+.categoryCheckboxes {
+  display: flex;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 12px;
+  padding: 12px;
+  background: #f9fafb;
+  border-radius: 8px;
+  border: 1px solid #e5e7eb;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #374151;
+  cursor: pointer;
+  padding: 6px 12px;
+  background: white;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+}
+
+.checkboxLabel:hover {
+  border-color: var(--color-primary);
+}
+
+.checkboxLabel input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+}
+
 @media (max-width: 768px) {
   .header h1 {
     font-size: 32px;
@@ -631,5 +784,14 @@
 
   .categoryGrid {
     grid-template-columns: 1fr;
+  }
+
+  .salesGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .saleMeta {
+    flex-direction: column;
+    gap: 8px;
   }
 }

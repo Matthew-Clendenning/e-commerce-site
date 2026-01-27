@@ -1,10 +1,12 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 import { prisma } from '@/lib/prisma'
+import { getSaleForCategory, calculateEffectiveDiscount, calculateSalePrice } from '@/lib/sales'
 import ProductActions from '@/components/ProductActions'
 import ProductViewTracker from '@/components/ProductViewTracker'
+import ImageGallery from '@/components/ImageGallery'
+import SaleBadge from '@/components/SaleBadge'
 import styles from '../../../styles/product.module.css'
 
 type Props = {
@@ -16,7 +18,10 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     const product = await prisma.product.findUnique({
         where: { slug },
-        include: {category: true }
+        include: {
+            category: true,
+            images: { orderBy: { position: 'asc' }, take: 1 }
+        }
     })
 
     if (!product) {
@@ -26,6 +31,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
     }
 
     const price = Number(product.price)
+    const primaryImage = product.images[0]?.url || product.imageUrl
 
     return {
         title: product.name,
@@ -33,9 +39,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
         openGraph: {
             title: product.name,
             description: product.description || `Shop ${product.name}`,
-            images: product.imageUrl ? [
+            images: primaryImage ? [
                 {
-                    url: product.imageUrl,
+                    url: primaryImage,
                     width: 800,
                     height: 600,
                     alt: product.name,
@@ -47,7 +53,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
             card: 'summary_large_image',
             title: product.name,
             description: product.description || `Shop ${product.name}`,
-            images: product.imageUrl ? [product.imageUrl] : [],
+            images: primaryImage ? [primaryImage] : [],
         },
         other: {
             'product:price:amount': price.toString(),
@@ -71,21 +77,38 @@ export default async function ProductPage({ params }: Props) {
 
     const product = await prisma.product.findUnique({
         where: { slug },
-        include: { category: true }
+        include: {
+            category: true,
+            images: { orderBy: { position: 'asc' } }
+        }
     })
 
     if (!product) {
         notFound()
     }
-    
+
     const price = Number(product.price)
+
+    // Fetch category sale info for discount calculation
+    const categorySale = await getSaleForCategory(product.categoryId)
+    const categoryDiscount = categorySale?.discount ?? 0
+    const effectiveDiscount = calculateEffectiveDiscount(product.discountPercent, categoryDiscount)
+    const hasDiscount = effectiveDiscount > 0
+    const salePrice = hasDiscount ? calculateSalePrice(price, effectiveDiscount) : price
+
+    // Build images array - use ProductImage records, fallback to legacy imageUrl
+    const galleryImages = product.images.length > 0
+        ? product.images.map(img => ({ id: img.id, url: img.url, alt: img.alt }))
+        : product.imageUrl
+            ? [{ id: 'legacy', url: product.imageUrl, alt: product.name }]
+            : []
 
     const jsonLd = {
         '@context': 'https://schema.org/',
         '@type': 'Product',
         name: product.name,
         description: product.description,
-        image: product.imageUrl,
+        image: galleryImages.length > 0 ? galleryImages.map(img => img.url) : undefined,
         sku: product.id,
         brand: {
             '@type': 'Brand',
@@ -125,28 +148,29 @@ export default async function ProductPage({ params }: Props) {
 
                 <div className={styles.productGrid}>
                     <div className={styles.imageSection}>
-                        {product.imageUrl ? (
-                            <Image
-                                src={product.imageUrl}
-                                alt={product.name}
-                                width={600}
-                                height={600}
-                                className={styles.image}
-                                priority
-                            />
-                        ) : (
-                            <div className={styles.placeholderImage}>
-                                <span>No Image Available</span>
-                            </div>
-                        )}
+                        <ImageGallery
+                            images={galleryImages}
+                            productName={product.name}
+                        />
                     </div>
 
                     <div className={styles.detailsSection}>
-                        <div className={styles.category}>{product.category.name}</div>
+                        <div className={styles.categoryRow}>
+                            <span className={styles.category}>{product.category.name}</span>
+                            {hasDiscount && <SaleBadge discount={effectiveDiscount} size="medium" />}
+                        </div>
                         <h1 className={styles.title}>{product.name}</h1>
 
-                        <div className={styles.price}>
-                            ${price.toFixed(2)}
+                        <div className={styles.priceSection}>
+                            {hasDiscount ? (
+                                <>
+                                    <span className={styles.originalPrice}>${price.toFixed(2)}</span>
+                                    <span className={styles.salePrice}>${salePrice.toFixed(2)}</span>
+                                    <span className={styles.savings}>Save ${(price - salePrice).toFixed(2)}</span>
+                                </>
+                            ) : (
+                                <span className={styles.price}>${price.toFixed(2)}</span>
+                            )}
                         </div>
 
                         <div className={styles.stock}>
