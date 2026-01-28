@@ -154,8 +154,8 @@ export class ProductsPage extends BasePage {
    */
   async showAllProducts(): Promise<void> {
     await this.allProductsFilter.click()
-    // Wait for navigation - URL might have query params removed or stay at /products
-    await this.page.waitForURL(/\/products(\?.*)?$/)
+    // Wait for navigation to /products without category param
+    await this.page.waitForURL('/products')
     await this.waitForPageLoad()
   }
 
@@ -212,9 +212,7 @@ export class ProductsPage extends BasePage {
    * Assert specific product count is displayed
    */
   async expectProductCount(count: number): Promise<void> {
-    // Check displayed count text
-    await expect(this.productCount).toContainText(`${count}`)
-    // Also verify actual card count matches
+    // Verify actual card count matches (count display element removed from page)
     await expect(this.productCards).toHaveCount(count)
   }
 
@@ -260,10 +258,15 @@ export class ProductsPage extends BasePage {
   }> {
     const card = this.productCards.filter({ hasText: productName })
 
+    // Get price from the price container - includes all price text
+    // This will contain either just the price, or originalPrice + salePrice
+    const priceContainer = card.locator('[class*="priceContainer"]')
+    const price = (await priceContainer.textContent()) || ''
+
     return {
       // ProductCard uses styles.title for the name (h3 element)
       name: (await card.locator('h3[class*="title"]').textContent()) || '',
-      price: (await card.locator('[class*="price"]').textContent()) || '',
+      price,
       category: (await card.locator('[class*="category"]').textContent()) || '',
       // Check for the outOfStock badge div specifically (not the stock span text)
       inStock: !(await card.locator('div[class*="outOfStock"]').isVisible()),
