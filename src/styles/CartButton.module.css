@@ -17,7 +17,7 @@
 .icon {
     width: 24px;
     height: 24px;
-    color: var(--color-charcoal);
+    color: rgba(255, 255, 255, 0.8);
 }
 
 .cartButton:hover .icon {

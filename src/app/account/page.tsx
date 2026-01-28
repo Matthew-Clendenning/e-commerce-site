@@ -94,6 +94,9 @@ export default async function AccountPage() {
           <p className={styles.profileEmail}>
             {user.primaryEmailAddress?.emailAddress}
           </p>
+          <Link href="/account/edit" className={styles.editProfileButton}>
+            Change Account Info / Password
+          </Link>
         </div>
       </div>
 

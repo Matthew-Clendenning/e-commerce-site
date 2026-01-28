@@ -17,6 +17,7 @@ type FavoriteProduct = {
 type FavoritesStore = {
     items: FavoriteProduct[]
     isLoading: boolean
+    hasLoaded: boolean
     favoriteIds: Set<string>
 
     loadFavorites: () => Promise<void>
@@ -26,26 +27,46 @@ type FavoritesStore = {
     clearFavorites: () => void
 }
 
+// Track loading promise to prevent duplicate concurrent requests
+let loadingPromise: Promise<void> | null = null
+
 export const useFavoritesStore = create<FavoritesStore>((set, get) => ({
     items: [],
     isLoading: false,
+    hasLoaded: false,
     favoriteIds: new Set<string>(),
 
     loadFavorites: async () => {
-        set({ isLoading: true })
-        try {
-            const response = await fetch('/api/favorites')
-
-            if (response.ok) {
-                const items = await response.json()
-                const favoriteIds = new Set<string>(items.map((item: FavoriteProduct) => item.id))
-                set({ items, favoriteIds })
-            }
-        } catch {
-            // Failed to load favorites
-        } finally {
-            set({ isLoading: false })
+        // If already loaded or currently loading, don't make another request
+        if (get().hasLoaded || get().isLoading) {
+            return
         }
+
+        // If there's already a loading promise in progress, wait for it
+        if (loadingPromise) {
+            return loadingPromise
+        }
+
+        set({ isLoading: true })
+
+        loadingPromise = (async () => {
+            try {
+                const response = await fetch('/api/favorites')
+
+                if (response.ok) {
+                    const items = await response.json()
+                    const favoriteIds = new Set<string>(items.map((item: FavoriteProduct) => item.id))
+                    set({ items, favoriteIds, hasLoaded: true })
+                }
+            } catch {
+                // Failed to load favorites
+            } finally {
+                set({ isLoading: false })
+                loadingPromise = null
+            }
+        })()
+
+        return loadingPromise
     },
 
     addFavorite: async (productId: string) => {
@@ -126,6 +147,6 @@ export const useFavoritesStore = create<FavoritesStore>((set, get) => ({
     },
 
     clearFavorites: () => {
-        set({ items: [], favoriteIds: new Set<string>() })
+        set({ items: [], favoriteIds: new Set<string>(), hasLoaded: false })
     }
 }))

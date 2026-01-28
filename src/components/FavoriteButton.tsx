@@ -22,17 +22,15 @@ export default function FavoriteButton({
     const { isSignedIn } = useUser()
     const { isFavorited, addFavorite, removeFavorite, loadFavorites } = useFavoritesStore()
     const [isLoading, setIsLoading] = useState(false)
-    const [hasLoaded, setHasLoaded] = useState(false)
 
     const favorited = isFavorited(productId)
 
-    // Load favorites on mount if signed in
+    // Load favorites on mount if signed in (store handles deduplication)
     useEffect(() => {
-        if (isSignedIn && !hasLoaded) {
+        if (isSignedIn) {
             loadFavorites()
-            setHasLoaded(true)
         }
-    }, [isSignedIn, hasLoaded, loadFavorites])
+    }, [isSignedIn, loadFavorites])
 
     const handleClick = async (e: React.MouseEvent) => {
         e.preventDefault()
