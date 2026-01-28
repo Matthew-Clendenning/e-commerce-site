@@ -59,24 +59,21 @@ export default function Navigation() {
 
         {/* Desktop Navigation */}
         <div className={styles.links}>
-          {/*<Link href="/" className={styles.link}>
+          <Link href="/" className={styles.link}>
             Home
           </Link>
           <Link href="/products" className={styles.link}>
             Products
           </Link>
-          <Link href="/orders" className={styles.link}>
-            Orders
-          </Link>*/}
 
           {/* Only show Admin link if user is admin */}
-          {/*<SignedIn>
+          <SignedIn>
             {isAdmin && (
               <Link href="/admin" className={styles.link}>
                 Admin
               </Link>
             )}
-          </SignedIn>*/}
+          </SignedIn>
         </div>
 
         <div className={styles.auth}>

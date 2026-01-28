@@ -65,7 +65,7 @@ export default async function ProductsPage({ searchParams }: Props) {
   }))
 
   // Determine page title
-  let pageTitle = 'All Products'
+  let pageTitle = 'Our Products'
   if (searchQuery) {
     pageTitle = `Search results for "${searchQuery}"`
   } else if (category) {

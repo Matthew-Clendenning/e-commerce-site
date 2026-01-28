@@ -45,13 +45,13 @@ export class ProductsPage extends BasePage {
     // Page structure selectors (based on products/page.tsx)
     this.heading = page.getByRole('heading', { level: 1 })
     this.productGrid = page.locator('[class*="grid"]').first()
-    // ProductCard uses styles.card, so we look for links with "card" class inside the grid
-    this.productCards = this.productGrid.locator('a[class*="card"]')
+    // ProductCard uses styles.card - find all cards across all grids (products may be grouped by category)
+    this.productCards = page.locator('a[class*="card"]')
 
-    // Filter selectors (based on ProductsFilter.tsx)
-    this.filterContainer = page.locator('[class*="filters"]')
-    this.filterButtons = this.filterContainer.locator('button')
-    this.allProductsFilter = page.getByRole('button', { name: 'All Products' })
+    // Filter selectors - now using CategoryNav links instead of buttons
+    this.filterContainer = page.locator('[class*="categoryNav"]')
+    this.filterButtons = this.filterContainer.locator('a[class*="link"]')
+    this.allProductsFilter = this.filterContainer.getByRole('link', { name: 'All' })
 
     // Count and empty state
     this.productCount = page.locator('[class*="count"]')
@@ -141,8 +141,8 @@ export class ProductsPage extends BasePage {
    * @param categoryName - Display name of the category
    */
   async filterByCategory(categoryName: string): Promise<void> {
-    const filterButton = this.filterButtons.filter({ hasText: categoryName })
-    await filterButton.click()
+    const filterLink = this.filterButtons.filter({ hasText: categoryName })
+    await filterLink.click()
 
     // Wait for URL to update
     await this.page.waitForURL(/category=|\/products$/)
@@ -154,21 +154,23 @@ export class ProductsPage extends BasePage {
    */
   async showAllProducts(): Promise<void> {
     await this.allProductsFilter.click()
-    await this.page.waitForURL('/products')
+    // Wait for navigation - URL might have query params removed or stay at /products
+    await this.page.waitForURL(/\/products(\?.*)?$/)
     await this.waitForPageLoad()
   }
 
   /**
-   * Get the currently active filter name
+   * Get the currently active filter name from URL
    */
   async getActiveFilter(): Promise<string | null> {
-    const activeButton = this.filterButtons.locator('[class*="active"]')
+    const url = this.page.url()
+    const match = url.match(/category=([^&]+)/)
 
-    if ((await activeButton.count()) === 0) {
-      return null
+    if (!match) {
+      return 'All'
     }
 
-    return await activeButton.textContent()
+    return match[1]
   }
 
   /**
@@ -218,10 +220,12 @@ export class ProductsPage extends BasePage {
 
   /**
    * Assert a specific filter is active (highlighted)
+   * Note: CategoryNav doesn't have active state styling, so we verify the URL instead
    */
   async expectActiveFilter(categoryName: string): Promise<void> {
-    const button = this.filterButtons.filter({ hasText: categoryName })
-    await expect(button).toHaveClass(/active|filterActive/)
+    // Verify the category filter is applied by checking URL contains the category slug
+    const categorySlug = categoryName.toLowerCase().replace(/\s+/g, '-')
+    await expect(this.page).toHaveURL(new RegExp(`category=${categorySlug}`))
   }
 
   /**
