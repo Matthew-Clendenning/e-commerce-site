@@ -3,6 +3,7 @@ import { Cormorant_Garamond, Inter } from 'next/font/google'
 import './globals.css'
 import type { Metadata } from 'next'
 import Navigation from '@/components/Navigation'
+import CategoryNav from '@/components/CategoryNav'
 import CartSidebar from '@/components/CartSidebar'
 import CartSyncHandler from '@/components/CartSyncHandler'
 import { Toaster } from 'sonner'
@@ -84,6 +85,7 @@ export default function RootLayout({
       <html lang="en">
         <body className={`${cormorantGaramond.variable} ${inter.variable}`}>
           <Navigation />
+          <CategoryNav />
           <CartSyncHandler />
           {children}
           <CartSidebar />

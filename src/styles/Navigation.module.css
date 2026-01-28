@@ -1,14 +1,12 @@
 .nav {
-  background: var(--color-cream-light);
-  border-bottom: 1px solid var(--color-border);
+  background: #303030;
   position: sticky;
   top: 0;
   z-index: 100;
-  box-shadow: 0 1px 3px rgba(26, 26, 26, 0.03);
 }
 
 .container {
-  max-width: 1400px;
+  max-width: 1300px;
   margin: 0 auto;
   padding: 0 20px;
   height: 70px;
@@ -21,14 +19,14 @@
   font-family: var(--font-heading), Georgia, serif;
   font-size: 26px;
   font-weight: 600;
-  color: var(--color-charcoal);
+  color: #fff;
   text-decoration: none;
-  letter-spacing: 1px;
-  transition: color 0.2s ease;
+  letter-spacing: 2px;
+  text-transform: uppercase;
 }
 
 .logo:hover {
-  color: var(--color-gold);
+  color: #fff;
 }
 
 .links {
@@ -38,9 +36,9 @@
 }
 
 .link {
-  font-size: 14px;
-  font-weight: 500;
-  color: var(--color-charcoal-light);
+  font-size: 13px;
+  font-weight: 400;
+  color: rgba(255, 255, 255, 0.8);
   text-decoration: none;
   text-transform: uppercase;
   letter-spacing: 1px;
@@ -86,7 +84,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--color-charcoal);
+  color: rgba(255, 255, 255, 0.8);
   transition: color 0.2s ease;
 }
 
@@ -101,7 +99,7 @@
   border: none;
   cursor: pointer;
   padding: 8px;
-  color: var(--color-charcoal);
+  color: rgba(255, 255, 255, 0.8);
   transition: color 0.2s ease;
   order: -1;
 }

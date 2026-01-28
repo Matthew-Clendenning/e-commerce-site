@@ -2,12 +2,12 @@
 
 import { useState } from 'react'
 import Link from 'next/link'
-import { SignInButton, SignedIn, SignedOut, useUser, useClerk } from '@clerk/nextjs'
+import { SignedIn, SignedOut, useUser, useClerk, SignInButton } from '@clerk/nextjs'
 import { useRouter } from 'next/navigation'
 import CartButton from './CartButton'
 import ProfileDropdown from './ProfileDropdown'
 import styles from '../styles/Navigation.module.css'
-import { UserRound, Menu, X, ChevronDown, ChevronUp } from 'lucide-react'
+import { Menu, X, ChevronDown, ChevronUp } from 'lucide-react'
 
 export default function Navigation() {
   const { user } = useUser()
@@ -53,13 +53,13 @@ export default function Navigation() {
           {mobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
         </button>
 
-        <Link href="/" className={styles.logo} title='LuxeMarket'>
-          LuxeMarket
+        <Link href="/" className={styles.logo} title='Vera Owens'>
+          Vera Owens
         </Link>
 
         {/* Desktop Navigation */}
         <div className={styles.links}>
-          <Link href="/" className={styles.link}>
+          {/*<Link href="/" className={styles.link}>
             Home
           </Link>
           <Link href="/products" className={styles.link}>
@@ -67,31 +67,24 @@ export default function Navigation() {
           </Link>
           <Link href="/orders" className={styles.link}>
             Orders
-          </Link>
+          </Link>*/}
 
           {/* Only show Admin link if user is admin */}
-          <SignedIn>
+          {/*<SignedIn>
             {isAdmin && (
               <Link href="/admin" className={styles.link}>
                 Admin
               </Link>
             )}
-          </SignedIn>
+          </SignedIn>*/}
         </div>
 
         <div className={styles.auth}>
           <CartButton />
 
-          {/* Desktop only - Profile/Sign In */}
+          {/* Desktop only - Profile dropdown (works for both guest and logged-in users) */}
           <div className={styles.desktopAuth}>
-            <SignedOut>
-              <SignInButton mode="modal">
-                <button className={styles.signInButton}><UserRound size={24} /></button>
-              </SignInButton>
-            </SignedOut>
-            <SignedIn>
-              <ProfileDropdown />
-            </SignedIn>
+            <ProfileDropdown />
           </div>
         </div>
       </div>
@@ -105,7 +98,7 @@ export default function Navigation() {
               Home
             </Link>
             <Link href="/products" className={styles.mobileLink} onClick={closeMobileMenu}>
-              Products
+              Browse Products
             </Link>
 
             {/* Account & Settings Dropdown - Only show when signed in */}
@@ -154,10 +147,17 @@ export default function Navigation() {
             </SignedIn>
 
             <SignedOut>
+              <Link href="/orders" className={styles.mobileLink} onClick={closeMobileMenu}>
+                Orders
+              </Link>
+              <Link href="/contact" className={styles.mobileLink} onClick={closeMobileMenu}>
+                Contact Us
+              </Link>
               <SignInButton mode="modal">
-                <button className={styles.mobileLogin} onClick={closeMobileMenu}>
-                  Login
-                </button>
+                <button
+                  className={styles.mobileSignIn} onClick={closeMobileMenu}>
+                    Login
+                  </button>
               </SignInButton>
             </SignedOut>
           </div>
