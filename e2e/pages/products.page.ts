@@ -278,8 +278,11 @@ export class ProductsPage extends BasePage {
    */
   async isProductOutOfStock(productName: string): Promise<boolean> {
     const card = this.productCards.filter({ hasText: productName })
+    // Scroll the card into view first (products may be grouped by category)
+    await card.scrollIntoViewIfNeeded()
     // Use the specific outOfStock badge div class, not text matching
-    const outOfStockBadge = card.locator('div[class*="outOfStock"]')
+    // Check for the badge text div specifically (not the overlay)
+    const outOfStockBadge = card.locator('div[class*="outOfStock"]:not([class*="Overlay"])')
     return await outOfStockBadge.isVisible()
   }
 }
