@@ -1,0 +1,222 @@
+.container {
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+  border-radius: 8px;
+  padding: 20px;
+  margin-top: 16px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 16px;
+}
+
+.title {
+  font-size: 14px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0;
+}
+
+.count {
+  font-size: 12px;
+  color: #6b7280;
+}
+
+.imageGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
+.imageItem {
+  position: relative;
+  background: #fff;
+  border: 1px solid #e5e7eb;
+  border-radius: 6px;
+  padding: 8px;
+  cursor: grab;
+  transition: all 0.2s ease;
+}
+
+.imageItem:hover {
+  border-color: #c9a962;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.imageItem.dragging {
+  opacity: 0.5;
+  border-color: #c9a962;
+  background: #fef9e7;
+}
+
+.dragHandle {
+  position: absolute;
+  top: 4px;
+  left: 4px;
+  color: #9ca3af;
+  cursor: grab;
+  z-index: 2;
+  padding: 2px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+.dragHandle:hover {
+  color: #6b7280;
+}
+
+.imageWrapper {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1;
+  border-radius: 4px;
+  overflow: hidden;
+  background: #f3f4f6;
+}
+
+.image {
+  object-fit: cover;
+}
+
+.primaryBadge {
+  position: absolute;
+  bottom: 4px;
+  left: 4px;
+  background: #c9a962;
+  color: #fff;
+  font-size: 9px;
+  font-weight: 600;
+  text-transform: uppercase;
+  padding: 2px 6px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+}
+
+.removeButton {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  width: 22px;
+  height: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ef4444;
+  color: #fff;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.2s ease;
+  z-index: 2;
+}
+
+.imageItem:hover .removeButton {
+  opacity: 1;
+}
+
+.removeButton:hover {
+  background: #dc2626;
+}
+
+.removeButton:disabled {
+  background: #9ca3af;
+  cursor: not-allowed;
+}
+
+.addSection {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inputGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.input {
+  width: 100%;
+  padding: 10px 12px;
+  font-size: 14px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.input:focus {
+  border-color: #c9a962;
+}
+
+.inputSmall {
+  width: 100%;
+  padding: 8px 12px;
+  font-size: 13px;
+  border: 1px solid #d1d5db;
+  border-radius: 6px;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.inputSmall:focus {
+  border-color: #c9a962;
+}
+
+.addButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 10px 16px;
+  background: #c9a962;
+  color: #1a1a1a;
+  border: none;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.addButton:hover:not(:disabled) {
+  background: #b8984f;
+}
+
+.addButton:disabled {
+  background: #d1d5db;
+  color: #9ca3af;
+  cursor: not-allowed;
+}
+
+.helpText {
+  font-size: 12px;
+  color: #6b7280;
+  margin: 12px 0 0 0;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .container {
+    padding: 16px;
+  }
+
+  .imageGrid {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .imageItem {
+    padding: 6px;
+  }
+
+  .primaryBadge {
+    font-size: 8px;
+    padding: 2px 4px;
+  }
+}
